@@ -1,0 +1,1170 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vice Glow</title>
+<style>
+:root{
+  --lamp:#ff6a1a; --lamp2:#ff2d6f;
+  --bg:#f5f3fb; --ink:#1d1a2c; --mu:#8a86a2; --mu2:#b9b5cc;
+  --glass:rgba(255,255,255,.66); --line:rgba(255,255,255,.85);
+  --vio:#7a68f5; --vio2:#ebe7ff; --ok:#22b07a; --bad:#e5486b;
+  --r:26px;
+  --sh:0 1px 0 rgba(255,255,255,.9) inset,0 18px 40px -18px rgba(70,50,150,.18),0 2px 6px rgba(70,50,150,.04);
+  --card:#fff; --card2:rgba(255,255,255,.72); --soft:#ece9f7; --trk:#e4e0f2; --tgoff:#dcd8ea; --onink:#fff;
+  --a1:.30; --a2:.16; --a3:.35; --dialtrk:rgba(70,50,150,.09); --off1:#f4f2fa; --off2:#d9d5e8;
+}
+:root[data-theme=dark]{
+  --bg:#141219; --ink:#f1eef8; --mu:#9a95ad; --mu2:#5e5a70;
+  --glass:rgba(34,31,44,.62); --line:rgba(255,255,255,.07);
+  --vio:#a393ff; --vio2:rgba(163,147,255,.16);
+  --sh:0 1px 0 rgba(255,255,255,.04) inset,0 18px 40px -18px rgba(0,0,0,.65),0 2px 6px rgba(0,0,0,.2);
+  --card:#2b2836; --card2:rgba(255,255,255,.06); --soft:rgba(255,255,255,.07); --trk:rgba(255,255,255,.10); --tgoff:rgba(255,255,255,.18); --onink:#141219;
+  --a1:.22; --a2:.13; --a3:.16; --dialtrk:rgba(255,255,255,.09); --off1:#3a3646; --off2:#2a2733;
+}
+:root[data-theme=dark] .pill.ok{color:#7be3b3;background:rgba(34,176,122,.16);border-color:transparent}
+:root[data-theme=dark] .pill.wait{color:#f2cf73;background:rgba(224,169,42,.16);border-color:transparent}
+:root[data-theme=dark] .pill.warn,:root[data-theme=dark] .tag.nv{color:#ffb77a;background:rgba(255,140,60,.14);border-color:transparent}
+:root[data-theme=dark] .tag.bt{color:#9db8ff;background:rgba(60,110,255,.16)}
+:root[data-theme=dark] .tag.wf{color:#76dcc4;background:rgba(18,160,130,.16)}
+:root[data-theme=dark] .act.on{color:#ffb27a;background:rgba(255,120,40,.15)}
+:root[data-theme=dark] .hint{color:#f2d79a;background:rgba(224,169,42,.12)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font:13px/1.35 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--bg);overflow:hidden;-webkit-font-smoothing:antialiased;user-select:none}
+button{font:inherit;color:inherit}
+input{font:inherit;color:inherit}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.aura{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.aura i{position:absolute;border-radius:50%;filter:blur(90px)}
+.aura i:nth-child(1){width:520px;height:520px;left:28%;top:-180px;background:#9b6bff;opacity:var(--a1)}
+.aura i:nth-child(2){width:420px;height:420px;right:-120px;bottom:-160px;background:#ff4fb0;opacity:var(--a2)}
+.aura i:nth-child(3){width:380px;height:380px;left:-140px;bottom:-120px;background:#b9adff;opacity:var(--a3)}
+.app{position:relative;display:flex;height:100%;padding:14px;gap:14px}
+.glass{background:var(--glass);backdrop-filter:blur(26px) saturate(1.4);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+/* sidebar */
+.side{width:214px;flex:none;display:flex;flex-direction:column;padding:16px 12px;min-height:0}
+.logo{display:flex;align-items:center;gap:10px;padding:2px 8px 16px}
+.logo b{font:600 17px "Segoe UI Variable Display",system-ui;letter-spacing:-.2px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:14px;color:var(--mu);cursor:pointer;transition:background .2s,color .2s}
+.nav a:hover{color:var(--ink);background:var(--card2)}
+.nav a.on{color:var(--ink);background:var(--card);box-shadow:0 6px 16px -10px rgba(70,50,150,.35);font-weight:600}
+.nav a.on svg{color:var(--vio)}
+.sec{font-size:11px;color:var(--mu);padding:18px 12px 8px;display:flex;justify-content:space-between;align-items:center}
+.sec span{color:var(--vio);cursor:pointer}
+.lamps{display:flex;flex-direction:column;gap:4px;overflow:auto;min-height:0}
+.lp{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;cursor:pointer}
+.lp:hover{background:var(--card2)}
+.lp.on{background:var(--card)}
+.lp>div:last-child{min-width:0}
+.lp b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{width:28px;height:28px;border-radius:10px;display:grid;place-items:center;flex:none;background:var(--soft);color:var(--mu)}
+.lp small{display:flex;align-items:center;gap:4px;color:var(--mu);font-size:11px;white-space:nowrap}
+.lp small svg{width:12px;height:12px}
+.foot{margin-top:auto;padding-top:8px}
+/* main */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;align-items:center;gap:14px;padding:4px 6px 0;min-height:60px}
+.ttl{display:flex;align-items:center;gap:6px;min-width:0}
+.ren{width:30px;height:30px;border-radius:50%;border:0;background:none;color:var(--mu);display:grid;place-items:center;cursor:pointer;flex:none;opacity:.75}
+.ren:hover{background:var(--card2);color:var(--vio);opacity:1}
+.ren svg{width:16px;height:16px}
+.dv .rn{display:flex;align-items:center;gap:2px}
+.dv input.nm{font-weight:600;font-size:14px;border:0;border-bottom:1.5px solid var(--vio);background:none;outline:0;padding:1px 2px;width:100%}
+.top h1{font:600 26px/1.1 "Segoe UI Variable Display",system-ui;letter-spacing:-.5px;outline:none;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}
+.top h1[contenteditable=true]{background:var(--card);padding:0 6px;box-shadow:0 0 0 2px var(--vio2)}
+.sub{color:var(--mu);font-size:12px;display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:99px;background:var(--card2);font-size:12px;border:1px solid var(--line);white-space:nowrap}
+.pill svg{width:14px;height:14px}
+.pill.ok{color:#14805a;background:#e2f7ee;border-color:#e2f7ee}
+.pill.ok::before,.pill.wait::before,.pill.off::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.pill.wait{color:#8a6a10;background:#fbf2d9;border-color:#fbf2d9}
+.pill.wait::before{background:#e0a92a;animation:pulse 1s infinite}
+.pill.off{color:#7a7690}
+.pill.off::before{background:#c9c5d9}
+.pill.warn{color:#9a4a00;background:#fff1e3;border-color:#fff1e3}
+@keyframes pulse{50%{opacity:.3}}
+.sp{flex:1}
+.pwr{width:52px;height:52px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;color:#fff;background:linear-gradient(145deg,var(--lamp),var(--lamp2));box-shadow:0 10px 26px -8px var(--lamp),inset 0 1px 0 rgba(255,255,255,.4);transition:all .4s}
+.pwr svg{width:22px;height:22px;stroke-width:2.2}
+.pwr.off{background:var(--soft);color:var(--mu);box-shadow:none}
+.page{display:none;flex:1;min-height:0}
+.page.on{display:flex;flex-direction:column;gap:14px;animation:in .3s ease}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.lbl{font-size:11px;color:var(--mu)}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:var(--mu);padding:30px}
+.empty b{font:600 20px "Segoe UI Variable Display",system-ui;color:var(--ink)}
+/* light */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;flex:1;min-height:0}
+.stage{position:relative;overflow:hidden;container-type:size}
+.lampbox{position:static}
+.stage .wall{position:absolute;inset:0;background:radial-gradient(60% 70% at 17% 55%,color-mix(in srgb,var(--lamp) 42%,transparent),transparent 70%);transition:background .6s,opacity .6s}
+.lampv{position:absolute;left:17%;margin-left:-15px;top:9%;bottom:9%;width:30px;border-radius:15px;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--lamp) 55%,#fff) 30%,var(--lamp) 70%,var(--lamp2));box-shadow:0 0 30px 6px color-mix(in srgb,var(--lamp) 70%,transparent),0 0 90px 20px color-mix(in srgb,var(--lamp) 35%,transparent);transition:all .6s}
+.stage.off .lampv{background:linear-gradient(180deg,var(--off1),var(--off2));box-shadow:none}
+.stage.off .wall{opacity:0}
+.stage.fx .lampv{background:var(--fxbg);background-size:100% 300%;animation:runv 3s linear infinite}
+@keyframes runv{to{background-position:0 300%}}
+.info{position:absolute;left:34%;right:22px;top:20px;bottom:16px;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.cname{font:600 clamp(20px,5.2cqw,30px)/1.05 "Segoe UI Variable Display",system-ui;letter-spacing:-.6px;margin-top:4px;overflow-wrap:anywhere}
+.hex{font-size:12px;color:var(--mu);margin-top:6px;font-variant-numeric:tabular-nums}
+.dial{position:relative;width:min(184px,100%,calc(100cqh - 120px));aspect-ratio:1;margin:auto 0 0 auto;touch-action:none;cursor:pointer;flex:none;container-type:inline-size}
+.dial svg{width:100%;height:100%;overflow:visible}
+.dial .trk{fill:none;stroke:var(--dialtrk);stroke-width:14;stroke-linecap:round}
+.dial .bar{fill:none;stroke:url(#bgrad);stroke-width:14;stroke-linecap:round}
+.dial .kn{fill:#fff;stroke:var(--lamp);stroke-width:3;filter:drop-shadow(0 2px 4px rgba(40,20,80,.3))}
+.dial .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.dial .num b{font:300 29cqi/1 "Segoe UI Variable Display",system-ui;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+.dial .num b small{font-size:11cqi;letter-spacing:0;color:var(--mu);margin-left:2px}
+.dial .num span{font-size:max(10px,6cqi);color:var(--mu);margin-top:4px}
+.picker{padding:18px 20px;display:flex;flex-direction:column;gap:14px;min-height:0;min-width:0;container-type:inline-size}
+.seg{display:flex;background:var(--card2);border-radius:99px;padding:4px;border:1px solid var(--line);flex:none}
+.seg b{flex:1;text-align:center;padding:7px 0;border-radius:99px;font-weight:500;color:var(--mu);cursor:pointer;font-size:12px;white-space:nowrap}
+.seg b.on{background:var(--card);color:var(--ink);box-shadow:0 4px 12px -6px rgba(70,50,150,.35)}
+.pane{display:none;flex-direction:column;gap:14px;flex:1;min-height:0}
+.pane.on{display:flex}
+.wheelrow{display:flex;gap:clamp(10px,4cqw,18px);align-items:center;flex:1;min-height:0}
+.wheel{position:relative;width:clamp(120px,48cqw,180px);aspect-ratio:1;border-radius:50%;flex:none;cursor:crosshair;touch-action:none;background:radial-gradient(circle,#fff 0,rgba(255,255,255,0) 68%),conic-gradient(from 90deg,#f00,#ff0 16.6%,#0f0 33.3%,#0ff 50%,#00f 66.6%,#f0f 83.3%,#f00);box-shadow:0 14px 30px -14px rgba(70,50,150,.4),inset 0 0 0 6px rgba(255,255,255,.55)}
+.knob{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;border:3px solid #fff;background:var(--lamp);box-shadow:0 4px 12px rgba(0,0,0,.25);pointer-events:none}
+.sw{display:grid;grid-template-columns:repeat(4,28px);gap:clamp(6px,2cqw,10px)}
+.sw i{width:28px;height:28px;border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);transition:transform .15s}
+.sw i:hover{transform:scale(1.1)}
+.sw i.on{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
+.sw i.add{display:grid;place-items:center;background:var(--card2);color:var(--mu)}
+.row{display:flex;align-items:center;gap:10px}
+.track{flex:1;height:10px;border-radius:5px;position:relative;cursor:pointer;touch-action:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)}
+.track i{position:absolute;top:-5px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.22);pointer-events:none}
+.rng{flex:1;height:6px;border-radius:3px;background:var(--trk);position:relative;cursor:pointer;touch-action:none}
+.rng b{position:absolute;inset:0 auto 0 0;border-radius:3px;background:var(--vio)}
+.rng i{position:absolute;top:-7px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(70,50,150,.35);pointer-events:none}
+.val{min-width:36px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.tgrow{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mu);cursor:pointer}
+.tg{width:34px;height:20px;border-radius:99px;background:var(--tgoff);position:relative;flex:none;cursor:pointer;transition:background .25s}
+.tg::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .25s}
+.tg.on{background:var(--vio)}
+.tg.on::after{left:16px}
+.whites{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.whites div{height:58px;border-radius:16px;cursor:pointer;display:flex;align-items:flex-end;padding:8px 10px;font-size:11px;color:#6b5a40;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)}
+.whites div.on{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
+.livebox{display:flex;flex-direction:column;gap:14px;flex:1}
+.bigbtn{height:44px;border-radius:99px;border:0;font-weight:600;cursor:pointer;background:var(--ink);color:var(--onink);display:flex;align-items:center;justify-content:center;gap:8px}
+.bigbtn.stop{background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.note{font-size:11.5px;color:var(--mu);line-height:1.45}
+.tiles{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr));gap:14px;height:150px;flex:none}
+.tile{padding:14px 16px;display:flex;flex-direction:column;position:relative;overflow:hidden;min-width:0}
+.tile h3{font:600 13px "Segoe UI Variable Text",system-ui;display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
+.tile h3 .tg{margin-left:auto}
+.tile p{color:var(--mu);font-size:11px;margin-top:2px}
+.scenes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
+.ms{display:flex;align-items:center;gap:9px;min-width:0;padding:5px 10px 5px 5px;border-radius:14px;background:var(--card2);box-shadow:0 0 0 1px var(--line);cursor:pointer;font-weight:600;font-size:12px;transition:transform .2s,box-shadow .2s}
+.ms:hover{transform:translateY(-1px);box-shadow:0 0 0 1px var(--trk),0 6px 14px -8px rgba(70,50,150,.35)}
+.ms i{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
+.ms i svg{width:15px;height:15px}
+.ms span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc{height:62px;min-width:0;border-radius:16px;padding:8px;color:#fff;font-size:11px;font-weight:600;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;text-shadow:0 1px 4px rgba(0,0,0,.25);transition:transform .2s;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;position:relative}
+.sc:hover{transform:translateY(-2px)}
+.sc svg{width:16px;height:16px}
+.bars{display:flex;align-items:flex-end;gap:4px;height:46px;margin-top:auto}
+.bars i{flex:1;border-radius:4px;height:20%;background:linear-gradient(180deg,#ff4fb0,#9b6bff)}
+.on-live .bars i{animation:eq 1.1s ease-in-out infinite alternate}
+@keyframes eq{0%{height:18%}100%{height:100%}}
+.scr{margin-top:auto;position:relative;display:flex;flex-direction:column;align-items:center;padding-top:6px}
+.scr .halo{position:absolute;left:50%;top:4px;width:118px;height:50px;transform:translateX(-50%);border-radius:16px;background:linear-gradient(90deg,#9b6bff,#ff4fb0,#ff9f6b,#7fb8ff,#9b6bff);background-size:300% 100%;filter:blur(14px);opacity:.22;transition:opacity .5s}
+.scr .disp{position:relative;width:88px;height:48px;border-radius:10px;background:var(--card);box-shadow:0 0 0 1px var(--trk),0 6px 14px -8px rgba(70,50,150,.4)}
+.scr .disp::after{content:"";position:absolute;inset:4px;border-radius:7px;background:linear-gradient(120deg,#b9a6ff,#ffb3da 55%,#ffd2b0);background-size:200% 100%}
+.scr .stand{width:24px;height:5px;border-radius:3px;background:var(--tgoff);margin-top:4px}
+.on-live .scr .halo{opacity:.8;animation:run 6s linear infinite}
+.on-live .scr .disp::after{animation:run 6s linear infinite}
+.ring{margin-top:auto;display:flex;align-items:center;gap:12px}
+.ring .t{font:600 22px "Segoe UI Variable Display",system-ui;letter-spacing:-.5px}
+/* effects */
+.search{display:flex;align-items:center;gap:10px;padding:0 16px;height:44px;border-radius:99px;color:var(--mu);flex:none}
+.search input{border:0;background:none;outline:0;flex:1}
+.chips{display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden;flex:none}
+.chip{white-space:nowrap;padding:8px 14px;border-radius:99px;background:var(--card2);border:1px solid var(--line);color:var(--mu);cursor:pointer;font-size:12px;font-weight:500}
+.chip.on{background:var(--ink);color:var(--onink);border-color:var(--ink)}
+.fx{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;overflow:auto;padding:2px 4px 2px 2px;align-content:start;flex:1;min-height:0}
+.fc{padding:10px;border-radius:20px;cursor:pointer;transition:transform .2s}
+.fc:hover{transform:translateY(-2px)}
+.fc .pv{height:58px;border-radius:14px;position:relative;overflow:hidden}
+.fc .pv::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 9px,rgba(255,255,255,.16) 9px 10px)}
+@keyframes run{to{background-position:300% 0}}
+@keyframes br{50%{filter:brightness(.3)}}
+@keyframes fl{0%,100%{opacity:1}45%{opacity:1}50%{opacity:.12}55%{opacity:1}}
+@keyframes tw{0%,100%{filter:brightness(1)}30%{filter:brightness(.5)}60%{filter:brightness(1.3)}}
+.fc .nm{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:9px 4px 2px;font-weight:600;font-size:12px}
+.fc .nm>div{min-width:0}
+.fc .nm span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc .nm small{display:block;color:var(--mu);font-weight:400;font-size:11px}
+.fc .nm svg{width:16px;height:16px;color:var(--mu2);flex:none}
+.fc .nm svg:hover{color:#ff4d7d}
+.fc.fav .nm svg{color:#ff4d7d;fill:#ff4d7d}
+.fc.on{background:var(--card);box-shadow:0 0 0 2px var(--vio),var(--sh)}
+.fxbar{display:flex;gap:22px;padding:14px 18px;align-items:center;flex:none}
+.fxbar .row{flex:1}
+/* scenes page */
+.scgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;overflow:auto;align-content:start;flex:1;min-height:0;padding:2px}
+.scgrid .sc{height:140px;border-radius:24px;padding:16px;font-size:15px}
+.scgrid .sc small{display:block;font-weight:400;font-size:12px;opacity:.92}
+.scgrid .sc .x{position:absolute;right:10px;top:10px;width:26px;height:26px;border-radius:50%;display:none;place-items:center;background:rgba(0,0,0,.18)}
+.scgrid .sc:hover .x{display:grid}
+.addt{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:22px;border:1.5px dashed var(--tgoff);color:var(--vio);font-weight:600;cursor:pointer;flex-direction:column}
+.newsc{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:24px;height:140px}
+.newsc input{border:0;border-bottom:1.5px solid var(--tgoff);background:none;outline:0;padding:4px 2px;font-weight:600;font-size:15px}
+.icons{display:flex;gap:6px}
+.icons i{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;cursor:pointer;color:var(--mu);background:var(--card2)}
+.icons i.on{background:var(--ink);color:var(--onink)}
+/* schedule */
+.sched{display:grid;grid-template-columns:330px 1fr;gap:14px;flex:1;min-height:0}
+.clock{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative}
+.clock .c{position:absolute;text-align:center;top:50%;left:50%;transform:translate(-50%,-62%)}
+.clock .c b{display:block;font:300 44px/1 "Segoe UI Variable Display",system-ui;letter-spacing:-1.5px}
+.clock .c span{color:var(--mu);font-size:12px}
+.legend{display:flex;gap:16px;margin-top:14px;color:var(--mu);font-size:11px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.timers{display:flex;flex-direction:column;gap:10px;overflow:auto;min-height:0;padding:2px}
+.tm{display:flex;align-items:center;gap:16px;padding:14px 18px;cursor:pointer}
+.tm .tt{font:300 40px/1 "Segoe UI Variable Display",system-ui;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;width:118px}
+.tm .tt small{font-size:14px;color:var(--mu);letter-spacing:0;margin-left:2px}
+.act{padding:5px 10px;border-radius:99px;font-size:11px;font-weight:600;display:inline-block}
+.act.on{background:#fff1e6;color:#c4540f}
+.act.off{background:var(--soft);color:var(--mu)}
+.days{display:flex;gap:4px;margin-top:8px}
+.days i{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px;color:var(--mu);background:var(--card2);cursor:pointer}
+.days i.on{background:var(--ink);color:var(--onink)}
+.tm.dis{opacity:.55}
+.edit{padding:18px;display:flex;flex-direction:column;gap:14px}
+.digits{display:flex;align-items:center;gap:6px}
+.digits input{width:84px;height:76px;border-radius:20px;border:0;background:var(--card);text-align:center;font:300 48px "Segoe UI Variable Display",system-ui;outline:0;box-shadow:inset 0 0 0 1.5px var(--trk)}
+.digits input:focus{box-shadow:inset 0 0 0 2px var(--vio)}
+.digits b{font:300 40px "Segoe UI Variable Display",system-ui;color:var(--mu)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 14px;border-radius:99px;font-weight:600;font-size:12px;cursor:pointer;border:0;white-space:nowrap}
+.btn.pr{background:var(--ink);color:var(--onink)}
+.btn.gh{background:var(--card2);box-shadow:inset 0 0 0 1px var(--trk)}
+.btn.bad{color:var(--bad)}
+.btn svg{width:15px;height:15px}
+/* devices */
+.scan{display:flex;align-items:center;gap:16px;padding:16px 20px;flex:none}
+.radar{width:48px;height:48px;border-radius:50%;position:relative;display:grid;place-items:center;background:var(--vio2);color:var(--vio);flex:none}
+.scanning .radar::before,.scanning .radar::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--vio);animation:ping 2s ease-out infinite;opacity:0}
+.scanning .radar::after{animation-delay:1s}
+@keyframes ping{0%{transform:scale(.6);opacity:.6}100%{transform:scale(1.6);opacity:0}}
+.dl{display:flex;flex-direction:column;gap:8px;overflow:auto;min-height:0;flex:1;padding:2px}
+.dh{font-size:11px;color:var(--mu);padding:6px 6px 0}
+.dv{display:grid;grid-template-columns:44px minmax(0,1fr) 130px auto 72px;align-items:center;gap:14px;padding:12px 16px}
+.dv .ic{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;background:var(--soft);color:var(--vio)}
+.dv b{font-weight:600;font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv small{display:flex;align-items:center;gap:6px;color:var(--mu);font-size:11px;margin-top:3px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.tag svg{width:12px;height:12px;stroke-width:2.2}
+.tag.bt{background:#e6efff;color:#2e5fd8}
+.tag.wf{background:#e6f7f3;color:#127a62}
+.tag.nv{background:#fff1e3;color:#a8560a}
+.sig{display:inline-flex;align-items:flex-end;gap:2px;height:12px}
+.sig i{width:3px;border-radius:1px;background:var(--tgoff)}
+.sig i.on{background:var(--ink)}
+.st{font-size:12px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.st::before{content:"";width:7px;height:7px;border-radius:50%;background:#c9c5d9;flex:none}
+.st.ok::before{background:var(--ok);box-shadow:0 0 0 3px #d9f5ea}
+.st.wait::before{background:#e0a92a;animation:pulse 1s infinite}
+.st.bad{color:var(--bad)}
+.st.bad::before{background:var(--bad)}
+.dv.unk{opacity:.65}
+.dv .more{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--mu)}
+.dv .more:hover{background:var(--card2);color:var(--bad)}
+.hint{padding:14px 18px;font-size:12px;color:#6a5a2a;background:#fff8e6;border-radius:18px;line-height:1.5}
+/* settings */
+.set{display:grid;grid-template-columns:1fr 1fr;gap:14px;overflow:auto;align-content:start;flex:1;min-height:0;padding:2px}
+.card{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.card h2{font:600 15px "Segoe UI Variable Display",system-ui}
+.card .row>span:first-child{min-width:90px;color:var(--mu);font-size:12px}
+.kbd{display:inline-block;padding:2px 7px;border-radius:7px;background:var(--card);box-shadow:inset 0 -1px 0 var(--tgoff),0 0 0 1px var(--trk);font-size:11px;font-weight:600;color:var(--ink)}
+.about a{color:var(--vio);cursor:pointer;text-decoration:none}
+.gh{display:flex !important;align-items:center;gap:14px;padding:12px 14px;border-radius:18px;background:var(--card2);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink) !important;transition:background .2s}
+.gh:hover{background:var(--card)}
+.gh .gi{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--ink);flex:none}
+.gh .gi svg{width:20px;height:20px}
+.gh div{flex:1;min-width:0}
+.gh b{display:block;font-weight:600;font-size:14px}
+.gh small{display:block;color:var(--mu);font-size:12px;margin-top:2px}
+.gh .ar{width:16px;height:16px;color:var(--mu)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);opacity:0;background:var(--ink);color:var(--onink);padding:10px 16px;border-radius:99px;font-size:12px;transition:all .3s;pointer-events:none;z-index:9}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-thumb{background:rgba(120,110,170,.25);border-radius:4px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="ma" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.8"/></filter>
+    <filter id="mb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation=".6"/></filter>
+    <linearGradient id="mg" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#9B6BFF"/><stop offset=".6" stop-color="#FF4FB0"/><stop offset="1" stop-color="#FF9F6B"/></linearGradient>
+    <radialGradient id="mo" cx=".42" cy=".38"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#FFE0F2"/><stop offset="1" stop-color="#FF7AC6"/></radialGradient>
+  </defs>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0l1.58 6.14a2 2 0 0 0 1.44 1.44l6.14 1.58a.5.5 0 0 1 0 .96l-6.14 1.58a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/></symbol>
+  <symbol id="i-pal" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></symbol>
+  <symbol id="i-set" viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+  <symbol id="i-pwr" viewBox="0 0 24 24"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></symbol>
+  <symbol id="i-bt" viewBox="0 0 24 24"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+  <symbol id="i-mon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-film" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18M17 3v18M3 12h18M3 7.5h4M3 16.5h4M17 7.5h4M17 16.5h4"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
+  <symbol id="i-cam" viewBox="0 0 24 24"><path d="m16 13 5.22 3.48a.5.5 0 0 0 .78-.42V7.87a.5.5 0 0 0-.75-.43L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="i-github" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-strip" viewBox="0 0 24 24"><rect x="2" y="9" width="20" height="6" rx="3"/><path d="M6 12h.01M10 12h.01M14 12h.01M18 12h.01"/></symbol>
+  <symbol id="i-lamp" viewBox="0 0 24 24"><rect x="10" y="2" width="4" height="20" rx="2"/></symbol>
+  <symbol id="i-bulb2" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4"/><circle cx="12" cy="9" r="6"/></symbol>
+  <symbol id="i-heartb" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
+</svg>
+
+<div class="aura"><i></i><i></i><i></i></div>
+
+<div class="app">
+  <aside class="side glass">
+    <div class="logo">
+      <svg width="34" height="34" viewBox="0 0 24 24" style="overflow:visible"><defs><path id="spiral" d="M18.3 6.7A8.2 8.2 0 1 0 20.2 12C20.2 17.2 12.6 18.6 9.8 14.8C8.4 12.8 9.6 9.4 11.9 10.6"/></defs><circle cx="12.7" cy="12" r="4.2" fill="#FF4FB0" opacity=".5" filter="url(#ma)"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#spiral" stroke="#B15CFF" stroke-width="4.3" opacity=".5" filter="url(#ma)"/><use href="#spiral" stroke="url(#mg)" stroke-width="2.7" opacity=".9" filter="url(#mb)"/><use href="#spiral" stroke="url(#mg)" stroke-width="1.8"/><use href="#spiral" stroke="#fff" stroke-width=".63" opacity=".85"/></g><circle cx="12.7" cy="12" r="1.9" fill="url(#mo)"/></svg>
+      <b>Vice Glow</b>
+    </div>
+    <nav class="nav" id="nav">
+      <a data-p="light" class="on"><svg class="i"><use href="#i-bulb"/></svg>Світло</a>
+      <a data-p="fx"><svg class="i"><use href="#i-spark"/></svg>Ефекти</a>
+      <a data-p="scenes"><svg class="i"><use href="#i-pal"/></svg>Сцени</a>
+      <a data-p="sched"><svg class="i"><use href="#i-clock"/></svg>Розклад</a>
+      <a data-p="dev"><svg class="i"><use href="#i-radio"/></svg>Пристрої</a>
+    </nav>
+    <div class="sec">Мої лампи <span id="addLamp">+ Додати</span></div>
+    <div class="lamps" id="lamps"></div>
+    <div class="foot nav"><a data-p="set"><svg class="i"><use href="#i-set"/></svg>Налаштування</a></div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <div style="min-width:0">
+        <div class="ttl"><h1 id="title">Vice Glow</h1><button class="ren" id="ren" title="Перейменувати лампу"><svg class="i"><use href="#i-pen"/></svg></button></div>
+        <div class="sub" id="sub"></div>
+      </div>
+      <div class="sp"></div>
+      <button class="pwr off" id="pwr" title="Увімкнути / вимкнути"><svg class="i"><use href="#i-pwr"/></svg></button>
+    </header>
+
+    <!-- LIGHT -->
+    <section class="page on" id="p-light">
+      <div class="empty" id="noLamp" style="display:none">
+        <svg class="i" style="width:40px;height:40px;color:var(--vio)"><use href="#i-radio"/></svg>
+        <b>Додайте свою лампу</b>
+        <div>Vice Glow знайде лампи поруч через Bluetooth і у вашій мережі Wi-Fi.</div>
+        <button class="btn pr" data-go="dev">Шукати лампи</button>
+      </div>
+      <div class="hero" id="hero">
+        <div class="stage glass" id="stage">
+          <div class="wall"></div>
+          <div class="lampbox"><div class="lampv"></div></div>
+          <div class="info">
+            <div class="lbl" id="nowLbl">Зараз світить</div>
+            <div class="cname" id="cname">—</div>
+            <div class="hex" id="hex"></div>
+            <div class="dial" id="bdial" title="Яскравість: тягніть по дузі або крутіть коліщатко">
+              <svg viewBox="0 0 200 200"><defs><linearGradient id="bgrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" style="stop-color:var(--lamp2)"/><stop offset="1" style="stop-color:var(--lamp)"/></linearGradient></defs>
+                <path class="trk" d="M42.02 157.98A82 82 0 1 1 157.98 157.98"/>
+                <path class="bar" id="barc" pathLength="100" stroke-dasharray="0 100" d="M42.02 157.98A82 82 0 1 1 157.98 157.98"/>
+                <circle class="kn" id="bkn" r="10" cx="42" cy="158"/></svg>
+              <div class="num"><b id="bval">—<small>%</small></b><span>яскравість</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="picker glass">
+          <div class="seg" id="seg"><b data-m="color" class="on">Колір</b><b data-m="white">Білий</b><b data-m="audio">Звук ПК</b><b data-m="screen">Екран</b></div>
+          <div class="pane on" id="m-color">
+            <div class="wheelrow">
+              <div class="wheel" id="wheel"><div class="knob" id="knob"></div></div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div class="lbl">Улюблені</div>
+                <div class="sw" id="sw"></div>
+                <div class="note">Права кнопка — прибрати колір</div>
+              </div>
+            </div>
+            <div class="row"><span class="lbl" style="width:48px">Білого</span><div class="track" id="wsl"><i></i></div></div>
+            <div class="tgrow" id="gammaRow"><div class="tg" id="gamma"></div>Колір на лампі як на екрані</div>
+          </div>
+          <div class="pane" id="m-white">
+            <div class="lbl">Відтінок білого</div>
+            <div class="whites" id="whites"></div>
+            <div class="note">Лампа отримує суміш червоного, зеленого й синього. Якщо білий виглядає зеленкуватим чи синюватим, налаштуйте баланс у «Налаштуваннях».</div>
+          </div>
+          <div class="pane" id="m-audio">
+            <div class="livebox">
+              <div class="seg" id="aMode"><b data-v="pulse">Пульс у колір</b><b data-v="spectrum">Веселка в ритм</b></div>
+              <div class="row"><span class="lbl" style="width:84px">Чутливість</span><div class="rng" id="aGain"><b></b><i></i></div><span class="val" id="aGainV"></span></div>
+              <div class="note">Vice Glow слухає те, що грає комп’ютер (не мікрофон), і передає ритм на лампу. «Пульс» бере колір, обраний на колі.</div>
+              <div class="sp"></div>
+              <button class="bigbtn" id="aBtn"><svg class="i"><use href="#i-music"/></svg><span>Увімкнути світло за звуком</span></button>
+            </div>
+          </div>
+          <div class="pane" id="m-screen">
+            <div class="livebox">
+              <div class="seg" id="sMode"><b data-v="0">Увесь екран</b><b data-v="1">Краї екрана</b></div>
+              <div class="row"><span class="lbl" style="width:84px">Насиченість</span><div class="rng" id="sSat"><b></b><i></i></div><span class="val" id="sSatV"></span></div>
+              <div class="note">Лампа продовжує кольори основного монітора: світить тим, що переважає на екрані. Ігри на весь екран із захистом картинки можуть давати чорний.</div>
+              <div class="sp"></div>
+              <button class="bigbtn" id="sBtn"><svg class="i"><use href="#i-mon"/></svg><span>Увімкнути колір з екрана</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tiles" id="tiles">
+        <div class="tile glass">
+          <h3><svg class="i"><use href="#i-pal"/></svg>Сцени</h3>
+          <div class="scenes" id="miniScenes"></div>
+        </div>
+        <div class="tile glass" id="tAudio">
+          <h3><svg class="i"><use href="#i-music"/></svg>Звук ПК<div class="tg" id="tgA"></div></h3>
+          <p>Світло в ритм музики</p>
+          <div class="bars"><i style="animation-delay:-.2s"></i><i style="animation-delay:-.7s"></i><i style="animation-delay:-.4s"></i><i style="animation-delay:-.9s"></i><i style="animation-delay:-.1s"></i><i style="animation-delay:-.6s"></i><i style="animation-delay:-.3s"></i><i style="animation-delay:-.8s"></i></div>
+        </div>
+        <div class="tile glass" id="tScreen">
+          <h3><svg class="i"><use href="#i-mon"/></svg>Екран<div class="tg" id="tgS"></div></h3>
+          <p>Продовжує кольори монітора</p>
+          <div class="scr"><div class="halo"></div><div class="disp"></div><div class="stand"></div></div>
+        </div>
+        <div class="tile glass" id="tNext" style="cursor:pointer">
+          <h3><svg class="i"><use href="#i-clock"/></svg>Далі</h3>
+          <p id="nextWhat">Таймерів немає</p>
+          <div class="ring"><svg width="54" height="54" viewBox="0 0 54 54"><defs><linearGradient id="gr"><stop offset="0" stop-color="#7a68f5"/><stop offset="1" stop-color="#ff4fb0"/></linearGradient></defs><circle cx="27" cy="27" r="22" fill="none" style="stroke:var(--soft)" stroke-width="6"/><circle id="nextArc" cx="27" cy="27" r="22" fill="none" stroke="url(#gr)" stroke-width="6" stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="138.2" transform="rotate(-90 27 27)"/></svg><div><div class="t" id="nextT">—</div><div style="color:var(--mu);font-size:11px" id="nextIn"></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EFFECTS -->
+    <section class="page" id="p-fx">
+      <div class="search glass"><svg class="i"><use href="#i-search"/></svg><input id="q" placeholder="Пошук: «веселка», «синій», «спалахи»…"></div>
+      <div class="chips" id="chips"></div>
+      <div class="fx" id="fxg"></div>
+      <div class="fxbar glass" id="fxbar">
+        <div class="row" id="spdRow"><span class="lbl" style="width:66px">Швидкість</span><div class="rng" id="spd"><b></b><i></i></div><span class="val" id="spdV"></span></div>
+        <div class="row" id="lenRow"><span class="lbl" style="width:56px">Довжина</span><div class="rng" id="len"><b></b><i></i></div><span class="val" id="lenV"></span></div>
+        <div class="tgrow" id="cycRow"><div class="tg" id="cyc"></div>Перебирати всі</div>
+      </div>
+    </section>
+
+    <!-- SCENES -->
+    <section class="page" id="p-scenes">
+      <div class="scgrid" id="scgrid"></div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section class="page" id="p-sched">
+      <div class="empty" id="noTimers" style="display:none">
+        <svg class="i" style="width:40px;height:40px;color:var(--vio)"><use href="#i-clock"/></svg>
+        <b>Ця лампа не має власного розкладу</b>
+        <div>Таймери зберігаються в самій лампі й працюють без комп’ютера. Поки що Vice Glow вміє з ними працювати лише в лампах BanlanX SP611E–SP621E.</div>
+      </div>
+      <div class="sched" id="schedBox">
+        <div class="clock glass">
+          <svg width="250" height="250" viewBox="0 0 250 250" id="dial"></svg>
+          <div class="c"><b id="clockNow">—</b><span id="clockSub"></span></div>
+          <div class="legend"><span><i style="background:linear-gradient(90deg,#c9b8ff,#ff7ac6)"></i>світить</span><span><i style="background:var(--soft)"></i>вимкнено</span></div>
+        </div>
+        <div class="timers" id="timers"></div>
+      </div>
+    </section>
+
+    <!-- DEVICES -->
+    <section class="page" id="p-dev">
+      <div class="scan glass" id="scanBox">
+        <div class="radar"><svg class="i"><use href="#i-radio"/></svg></div>
+        <div style="flex:1"><b style="font-size:15px" id="scanT">Шукаю лампи поруч…</b><div style="color:var(--mu);font-size:12px;margin-top:2px">Bluetooth поруч і Wi-Fi у вашій мережі. Пошук іде, поки відкрита ця сторінка.</div></div>
+      </div>
+      <div class="hint" id="devHint" style="display:none"></div>
+      <div class="dl" id="dl"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page" id="p-set">
+      <div class="set">
+        <div class="card glass">
+          <h2>Загальне</h2>
+          <div class="tgrow" id="autoRow"><div class="tg" id="auto"></div>Запускати разом з Windows</div>
+          <div class="row"><span>Мова</span><div class="seg" id="lang" style="flex:1"><b data-v="uk">Українська</b><b data-v="en">English</b><b data-v="system">Як у Windows</b></div></div>
+          <div class="row"><span>Тема</span><div class="seg" id="theme" style="flex:1"><b data-v="light">Світла</b><b data-v="dark">Темна</b><b data-v="system">Як у Windows</b></div></div>
+          <div class="tgrow" id="gamma2Row"><div class="tg" id="gamma2"></div>Колір на лампі як на екрані</div>
+          <div class="row"><span>Крок яскравості</span><div class="rng" id="step"><b></b><i></i></div><span class="val" id="stepV"></span></div>
+          <div class="note">Гарячі клавіші: <span class="kbd">Ctrl+Alt+L</span> — увімкнути / вимкнути, <span class="kbd">Ctrl+Alt+PgUp</span> / <span class="kbd">PgDn</span> — яскравість.</div>
+        </div>
+        <div class="card glass" id="calCard">
+          <h2>Баланс білого лампи</h2>
+          <div class="note">Лампа зараз світить білим. Зменшуйте канал, якого забагато, доки білий не стане нейтральним.</div>
+          <div class="row"><span>Червоний</span><div class="rng" id="calR"><b style="background:#ff4d4d"></b><i></i></div><span class="val" id="calRV"></span></div>
+          <div class="row"><span>Зелений</span><div class="rng" id="calG"><b style="background:#28c76f"></b><i></i></div><span class="val" id="calGV"></span></div>
+          <div class="row"><span>Синій</span><div class="rng" id="calB"><b style="background:#3b6bff"></b><i></i></div><span class="val" id="calBV"></span></div>
+          <div class="row" id="orderRow"><span>Порядок кольорів</span><div class="seg" id="order" style="flex:1"></div></div>
+        </div>
+        <div class="card glass about">
+          <h2>Про програму</h2>
+          <div class="note" id="aboutVer"></div>
+          <a class="gh" id="ghLink"><span class="gi"><svg class="i"><use href="#i-github"/></svg></span><div><b>Fenderenko</b><small>автор · Vice Glow на GitHub</small></div><svg class="i ar"><use href="#i-out"/></svg></a>
+          <div class="note">Протоколи ламп — з відкритих проєктів: UniLED (BanlanX), led-ble і flux_led (Triones, Magic Home), elkbledom, lednetwf_ble, idealLED, bj_led, ledble-ledlamp, curl_smile, govee_ble_lights; Wi-Fi — відкриті API WLED, Govee, Yeelight, WiZ, LIFX, Nanoleaf, Philips Hue.</div>
+          <div class="note">Наживо перевірено лише BanlanX SP621E. Решта ламп працює за описами інших людей — якщо щось не так, допоможе журнал з телефона.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>window.FX=null</script>
+<script>
+const EN = {
+  'Світло': 'Light', 'Ефекти': 'Effects', 'Сцени': 'Scenes', 'Розклад': 'Schedule', 'Пристрої': 'Devices', 'Мої лампи': 'My lamps', '+ Додати': '+ Add', 'Налаштування': 'Settings',
+  'Додайте свою лампу': 'Add your lamp', 'Vice Glow знайде лампи поруч через Bluetooth і у вашій мережі Wi-Fi.': 'Vice Glow finds lamps nearby over Bluetooth and on your Wi-Fi network.', 'Шукати лампи': 'Find lamps',
+  'Зараз світить': 'Now shining', 'яскравість': 'brightness', 'Колір': 'Colour', 'Білий': 'White', 'Звук ПК': 'PC sound', 'Екран': 'Screen', 'Улюблені': 'Favourites', 'Права кнопка — прибрати колір': 'Right-click removes a colour',
+  'Білого': 'White', 'Колір на лампі як на екрані': 'Lamp colour as on screen', 'Відтінок білого': 'Shade of white',
+  'Лампа отримує суміш червоного, зеленого й синього. Якщо білий виглядає зеленкуватим чи синюватим, налаштуйте баланс у «Налаштуваннях».': 'The lamp mixes red, green and blue. If the white looks greenish or bluish, set the balance in Settings.',
+  'Пульс у колір': 'Pulse in colour', 'Веселка в ритм': 'Rainbow to the beat', 'Чутливість': 'Sensitivity',
+  'Vice Glow слухає те, що грає комп’ютер (не мікрофон), і передає ритм на лампу. «Пульс» бере колір, обраний на колі.': 'Vice Glow listens to what the PC plays (not the microphone) and sends the beat to the lamp. “Pulse” uses the colour picked on the wheel.',
+  'Увімкнути світло за звуком': 'Start light from sound', 'Зупинити світло за звуком': 'Stop light from sound', 'Увесь екран': 'Whole screen', 'Краї екрана': 'Screen edges', 'Насиченість': 'Saturation',
+  'Лампа продовжує кольори основного монітора: світить тим, що переважає на екрані. Ігри на весь екран із захистом картинки можуть давати чорний.': 'The lamp continues the colours of the main monitor: it shines with what dominates the screen. Full-screen games with protected output may give black.',
+  'Увімкнути колір з екрана': 'Start screen colour', 'Зупинити колір з екрана': 'Stop screen colour', 'Світло в ритм музики': 'Light to the music', 'Продовжує кольори монітора': 'Continues the monitor colours',
+  'Далі': 'Next', 'Таймерів немає': 'No timers', 'таймерів немає': 'no timers', 'Швидкість': 'Speed', 'Довжина': 'Length', 'Перебирати всі': 'Cycle all',
+  'Ця лампа не має власного розкладу': 'This lamp has no schedule of its own',
+  'Таймери зберігаються в самій лампі й працюють без комп’ютера. Поки що Vice Glow вміє з ними працювати лише в лампах BanlanX SP611E–SP621E.': 'Timers live in the lamp itself and work without the PC. So far Vice Glow handles them only on BanlanX SP611E–SP621E.',
+  'світить': 'on', 'вимкнено': 'off', 'Шукаю лампи поруч…': 'Looking for lamps nearby…', 'Пошук зупинено': 'Search stopped',
+  'Bluetooth поруч і Wi-Fi у вашій мережі. Пошук іде, поки відкрита ця сторінка.': 'Bluetooth nearby and Wi-Fi on your network. The search runs while this page is open.',
+  'Загальне': 'General', 'Запускати разом з Windows': 'Start with Windows', 'Тема': 'Theme', 'Світла': 'Light', 'Темна': 'Dark', 'Як у Windows': 'As in Windows', 'Мова': 'Language', 'Крок яскравості': 'Brightness step',
+  'Гарячі клавіші:': 'Hotkeys:', '— увімкнути / вимкнути,': '— on / off,', '— яскравість.': '— brightness.',
+  'Баланс білого лампи': 'Lamp white balance', 'Лампа зараз світить білим. Зменшуйте канал, якого забагато, доки білий не стане нейтральним.': 'The lamp is shining white now. Lower the channel there is too much of until the white looks neutral.',
+  'Червоний': 'Red', 'Зелений': 'Green', 'Синій': 'Blue', 'Порядок кольорів': 'Colour order', 'Про програму': 'About',
+  'Протоколи ламп — з відкритих проєктів: UniLED (BanlanX), led-ble і flux_led (Triones, Magic Home), elkbledom, lednetwf_ble, idealLED, bj_led, ledble-ledlamp, curl_smile, govee_ble_lights; Wi-Fi — відкриті API WLED, Govee, Yeelight, WiZ, LIFX, Nanoleaf, Philips Hue.': 'Lamp protocols come from open projects: UniLED (BanlanX), led-ble and flux_led (Triones, Magic Home), elkbledom, lednetwf_ble, idealLED, bj_led, ledble-ledlamp, curl_smile, govee_ble_lights; Wi-Fi — the open APIs of WLED, Govee, Yeelight, WiZ, LIFX, Nanoleaf, Philips Hue.',
+  'Наживо перевірено лише BanlanX SP621E. Решта ламп працює за описами інших людей — якщо щось не так, допоможе журнал з телефона.': 'Only BanlanX SP621E is tested on a real lamp. The rest follow other people’s descriptions — if something is off, a log from the phone helps.',
+  'автор · Vice Glow на GitHub': 'author · Vice Glow on GitHub', 'керування світлодіодними лампами з комп’ютера.': 'LED lamps from your PC.',
+  'Перейменувати лампу': 'Rename the lamp', 'Перейменувати': 'Rename', 'Забути лампу': 'Forget the lamp', 'Увімкнути / вимкнути': 'On / off', 'Яскравість: тягніть по дузі або крутіть коліщатко': 'Brightness: drag along the arc or turn the wheel',
+  'Пошук: «веселка», «синій», «спалахи»…': 'Search: “rainbow”, “blue”, “strobe”…',
+  'Захід': 'Sunset', 'Помаранчевий': 'Orange', 'Бурштин': 'Amber', 'Сонце': 'Sun', 'Лайм': 'Lime', 'Смарагд': 'Emerald', 'Бірюза': 'Turquoise', 'Небо': 'Sky', 'Індиго': 'Indigo', 'Аметист': 'Amethyst', 'Фуксія': 'Fuchsia', 'Малина': 'Raspberry', 'Теплий білий': 'Warm white',
+  'Свічка': 'Candle', 'Теплий': 'Warm', 'М’який': 'Soft', 'Нейтральний': 'Neutral', 'Денний': 'Daylight', 'Холодний': 'Cool',
+  'Ефект': 'Effect', 'Вимкнено': 'Off', 'Світло за звуком': 'Light from sound', 'Колір з екрана': 'Screen colour', 'Як на екрані': 'As on screen', 'Додати поточний колір': 'Add the current colour',
+  'Сцена': 'Scene', 'Моя сцена': 'My scene', 'Сцену збережено': 'Scene saved', 'Назва сцени': 'Scene name', 'Зберегти': 'Save', 'Скасувати': 'Cancel', 'Зберегти поточне світло': 'Save the current light',
+  'Усі': 'All', '♥ Улюблені': '♥ Favourites', 'Спокійні': 'Calm', 'Веселка': 'Rainbow', 'Біг': 'Running', 'Мерехтіння': 'Sparkle', 'Звук лампи': 'Lamp sound', 'Інші': 'Other',
+  'Немає лампи': 'No lamp', 'Ця лампа не має вбудованих ефектів': 'This lamp has no built-in effects', 'Спробуйте сцени або світло за звуком ПК.': 'Try scenes or light from the PC sound.', 'мікрофон лампи': 'lamp microphone', 'Нічого не знайдено': 'Nothing found',
+  'Пн': 'Mo', 'Вт': 'Tu', 'Ср': 'We', 'Чт': 'Th', 'Пт': 'Fr', 'Сб': 'Sa', 'Нд': 'Su',
+  'увімкнення о': 'turns on at', 'вимкнення о': 'turns off at', 'Увімкнення': 'Turning on', 'Вимкнення': 'Turning off', 'щодня': 'daily', 'раз': 'once', 'один раз': 'once', 'по буднях': 'on weekdays', 'на вихідних': 'at weekends',
+  'Увімкнути': 'Turn on', 'Вимкнути': 'Turn off', 'Додати таймер': 'Add a timer', 'Повторювати': 'Repeat', 'Один раз': 'Once', 'Видалити': 'Delete',
+  'Коліщатко миші над цифрами змінює час. Таймер записується в лампу й працює без комп’ютера.': 'The mouse wheel over the digits changes the time. The timer is written to the lamp and works without the PC.',
+  'Таймер записано в лампу': 'Timer written to the lamp', 'дБм': 'dBm',
+  'Зв’язок': 'Connected', 'Підключаюсь…': 'Connecting…', 'Немає зв’язку': 'No connection', 'Поруч': 'Nearby', 'Готова': 'Ready', 'Відключено': 'Disconnected', 'Поза зоною': 'Out of range', 'увімкнено': 'on', 'Ще немає ламп': 'No lamps yet',
+  'Натисніть кнопку на мосту Philips Hue, потім ще раз «Підключити».': 'Press the button on the Philips Hue bridge, then “Connect” again.',
+  'Утримуйте кнопку живлення Nanoleaf 5–7 секунд, доки не замигає, потім ще раз «Підключити».': 'Hold the Nanoleaf power button for 5–7 seconds until it flashes, then “Connect” again.',
+  'Лампа не відповідає. Можливо, до неї підключений телефон (лампа приймає лише одне з’єднання) або вона далеко чи вимкнена з розетки.': 'The lamp does not answer. A phone may be connected to it (it takes one connection only), or it is far away or unplugged.',
+  'Vice Glow не знає, як говорити з цією лампою.': 'Vice Glow does not know how to talk to this lamp.',
+  'Протокол узято з відкритих проєктів; на цій моделі Vice Glow ще не перевіряли': 'The protocol comes from open projects; Vice Glow has not been tested on this model yet', 'не перевірено': 'not tested',
+  'Протокол невідомий': 'Unknown protocol', 'протокол невідомий': 'unknown protocol', 'Міст Hue': 'Hue bridge', 'У мережі': 'On the network', 'Як додати': 'How to add', 'Підключити': 'Connect', 'Відключити': 'Disconnect',
+  'Знайдено поруч': 'Found nearby', 'Ще немає — оберіть лампу нижче.': 'None yet — pick a lamp below.',
+  'Поки нічого. Увімкніть лампу й закрийте її додаток на телефоні: більшість ламп приймає лише одне з’єднання.': 'Nothing yet. Switch the lamp on and close its phone app: most lamps take one connection only.',
+  'Vice Glow не знає протоколу цієї лампи. Можна додати її так само, як BanlanX: увімкнути на телефоні «Журнал Bluetooth HCI», покерувати лампою з її додатка й надіслати звіт про помилку — з нього видно команди.': 'Vice Glow does not know this lamp’s protocol. It can be added the way BanlanX was: turn on the “Bluetooth HCI snoop log” on the phone, control the lamp from its app and send a bug report — the commands show in it.',
+  'Забути цю лампу? Її можна буде знайти й підключити знову.': 'Forget this lamp? You can find and connect it again.', 'Підключаю…': 'Connecting…',
+  'Назву записано в лампу': 'The name is written to the lamp', 'Назву змінено у Vice Glow': 'The name is changed in Vice Glow',
+  'Вечір': 'Evening', 'Кіно': 'Movie', 'Стрім': 'Stream', 'Читання': 'Reading', 'Вечірка': 'Party', 'Торшер': 'Floor lamp',
+  'Українська': 'Українська', 'English': 'English',
+};
+let LANG = 'uk';
+const t = s => LANG === 'en' && EN[s] != null ? EN[s] : s;
+// every text node and title / placeholder is translated by its Ukrainian original, also after re-renders
+let trBusy = false;
+function trNode(n) {
+  if (n.nodeType === 3) {
+    if (n.__uk === undefined) n.__uk = n.nodeValue;
+    const raw = n.__uk, k = raw.trim();
+    if (!k) return;
+    const v = LANG === 'en' && EN[k] != null ? raw.replace(k, EN[k]) : raw;
+    if (n.nodeValue !== v) n.nodeValue = v;
+    return;
+  }
+  if (n.nodeType !== 1 || n.tagName === 'SCRIPT' || n.tagName === 'STYLE') return;
+  for (const a of ['title', 'placeholder']) {
+    if (!n.hasAttribute(a)) continue;
+    const key = '__uk_' + a;
+    if (n[key] === undefined) n[key] = n.getAttribute(a);
+    const raw = n[key], v = LANG === 'en' && EN[raw] != null ? EN[raw] : raw;
+    if (n.getAttribute(a) !== v) n.setAttribute(a, v);
+  }
+  for (const c of n.childNodes) trNode(c);
+}
+function trAll() { trBusy = true; trNode(document.body); trBusy = false; }
+new MutationObserver(ms => {
+  if (trBusy) return;
+  trBusy = true;
+  for (const m of ms) {
+    if (m.type === 'characterData') { const n = m.target; if (n.__uk !== undefined && n.nodeValue !== (LANG === 'en' && EN[n.__uk.trim()] != null ? n.__uk.replace(n.__uk.trim(), EN[n.__uk.trim()]) : n.__uk)) { n.__uk = n.nodeValue; trNode(n); } }
+    else for (const n of m.addedNodes) trNode(n);
+  }
+  trBusy = false;
+}).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+function applyLang() {
+  const l = CFG.lang || 'en';
+  const want = l === 'system' ? ((navigator.language || 'uk').toLowerCase().startsWith('uk') ? 'uk' : 'en') : l;
+  if (want === LANG) return;
+  LANG = want; document.documentElement.lang = want; trAll();
+}
+const $ = id => document.getElementById(id);
+const host = window.chrome && chrome.webview;
+const send = m => host ? chrome.webview.postMessage(m) : mockSend(m);
+let S = null, L = null, C = {}, CFG = {}, holdUntil = 0, page = 'light', fxGroup = 'all', editing = null, newScene = null;
+const hold = (ms = 800) => { holdUntil = Date.now() + ms; };
+const held = () => Date.now() < holdUntil;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2600); }
+function throttled(fn, ms = 90) {
+  let last = 0, t = null, args = null;
+  return (...a) => { args = a; const now = Date.now(); clearTimeout(t); if (now - last >= ms) { last = now; fn(...args); } else t = setTimeout(() => { last = Date.now(); fn(...args); }, ms - (now - last)); };
+}
+
+/* colours */
+const hexOf = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+const unhex = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
+function hsv2rgb(h, s, v = 1) { const f = n => { const k = (n + h / 60) % 6; return Math.round(255 * (v - v * s * Math.max(0, Math.min(k, 4 - k, 1)))); }; return [f(5), f(3), f(1)]; }
+function rgb2hsv([r, g, b]) { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [h * 60, mx ? d / mx : 0, mx]; }
+const NAMES = [[0, 'Червоний'], [18, 'Захід'], [32, 'Помаранчевий'], [48, 'Бурштин'], [58, 'Сонце'], [90, 'Лайм'], [125, 'Зелений'], [155, 'Смарагд'], [180, 'Бірюза'], [200, 'Небо'], [225, 'Синій'], [255, 'Індиго'], [280, 'Аметист'], [305, 'Фуксія'], [330, 'Малина'], [360, 'Червоний']];
+function colorName(c) { const [h, s, v] = rgb2hsv(c); if (s < .12) return 'Білий'; if (s < .5) return 'Теплий білий'; return NAMES.reduce((b, n) => Math.abs(n[0] - h) < Math.abs(b[0] - h) ? n : b)[1]; }
+const WHITES = [['Свічка', '#FF9A4A'], ['Теплий', '#FFB46B'], ['М’який', '#FFC98F'], ['Нейтральний', '#FFDDB8'], ['Денний', '#FFEEDD'], ['Холодний', '#F2F4FF']];
+const LETTER = { R: '#ff2a3d', G: '#18e05a', B: '#2a5bff', Y: '#ffd000', C: '#00c8ff', P: '#a64dff', W: '#ffffff' };
+const RAINBOW = '#ff2a3d,#ffd000,#18e05a,#00c8ff,#2a5bff,#a64dff,#ff2a3d';
+
+function setLampColor(c, c2) {
+  const r = document.documentElement.style;
+  r.setProperty('--lamp', hexOf(c));
+  const [h, s, v] = rgb2hsv(c);
+  r.setProperty('--lamp2', hexOf(hsv2rgb((h + 330) % 360, Math.min(1, s + .1), Math.max(v, .6))));
+}
+
+/* navigation */
+function go(p) {
+  if (p === page) return;
+  if (page === 'dev') send({ t: 'scan', on: false });
+  page = p;
+  document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('on', a.dataset.p === p));
+  document.querySelectorAll('.page').forEach(x => x.classList.toggle('on', x.id === 'p-' + p));
+  if (p === 'dev') send({ t: 'scan', on: true });
+  render();
+}
+document.querySelectorAll('.nav a').forEach(a => a.onclick = () => go(a.dataset.p));
+document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+$('addLamp').onclick = () => go('dev');
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.activeElement.matches('input,[contenteditable=true]')) send({ t: 'hide' }); });
+
+/* generic slider: el with <b> fill and <i> knob; value 0..1 */
+function slider(el, onMove, onEnd) {
+  const at = e => { const r = el.getBoundingClientRect(); return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); };
+  el.onpointerdown = e => { el.setPointerCapture(e.pointerId); hold(); onMove(at(e)); el.onpointermove = ev => { hold(); onMove(at(ev)); }; };
+  el.onpointerup = e => { el.onpointermove = null; hold(); onEnd && onEnd(at(e)); };
+}
+function setRng(el, f) { const b = el.querySelector('b'), i = el.querySelector('i'); if (b) b.style.width = (f * 100) + '%'; if (i) i.style.left = (f * 100) + '%'; }
+
+/* light page */
+const sendBright = throttled(v => send({ t: 'bright', v }));
+const sendColor = throttled(rgb => send({ t: 'color', rgb }), 110);
+function setBright(v) {
+  v = Math.max(1, Math.min(100, Math.round(v)));
+  if (!L || v === L.bright) return;
+  hold(); L.bright = v;
+  if (S && S.live !== 'off') { S.live = 'off'; renderLiveCfg(); renderColor(); }
+  renderBright(); sendBright(v);
+}
+(() => {
+  const d = $('bdial');
+  // the arc runs 270° clockwise from the lower left (135°) to the lower right (45°)
+  const at = e => { const r = d.getBoundingClientRect(); let a = Math.atan2(e.clientY - r.top - r.height / 2, e.clientX - r.left - r.width / 2) * 180 / Math.PI; let rel = (a - 135 + 720) % 360; if (rel > 270) rel = rel > 315 ? 0 : 270; return rel / 270 * 100; };
+  d.onpointerdown = e => { d.setPointerCapture(e.pointerId); setBright(at(e)); d.onpointermove = ev => setBright(at(ev)); };
+  d.onpointerup = () => { d.onpointermove = null; };
+  $('stage').addEventListener('wheel', e => { if (!L) return; e.preventDefault(); setBright(L.bright + (e.deltaY < 0 ? 2 : -2)); }, { passive: false });
+})();
+let pick = { h: 18, s: 1 };
+function pickColor() { return hsv2rgb(pick.h, pick.s); }
+function wheelAt(e) { const r = $('wheel').getBoundingClientRect(), R = r.width / 2; const x = e.clientX - r.left - R, y = e.clientY - r.top - R; pick.h = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360; pick.s = Math.min(1, Math.hypot(x, y) / R); }
+$('wheel').onpointerdown = e => { $('wheel').setPointerCapture(e.pointerId); hold(); wheelAt(e); applyPick(); $('wheel').onpointermove = ev => { hold(); wheelAt(ev); applyPick(); }; };
+$('wheel').onpointerup = () => { $('wheel').onpointermove = null; hold(); };
+slider($('wsl'), f => { pick.s = 1 - f; applyPick(); });
+function applyPick() { const c = pickColor(); if (L) { L.rgb = c; L.effect = null; } renderColor(); sendColor(c); }
+$('gamma').parentElement.onclick = () => { CFG.gamma = !CFG.gamma; send({ t: 'settings', gamma: CFG.gamma }); renderSettings(); };
+$('pwr').onclick = () => { if (!L) return; hold(); L.power = !L.power; send({ t: 'power', on: L.power }); render(); };
+document.querySelectorAll('#seg b').forEach(b => b.onclick = () => { setMode(b.dataset.m); });
+let mode = 'color';
+function setMode(m) { mode = m; document.querySelectorAll('#seg b').forEach(x => x.classList.toggle('on', x.dataset.m === m)); document.querySelectorAll('.picker .pane').forEach(p => p.classList.toggle('on', p.id === 'm-' + m)); }
+function liveToggle(m) { const on = S && S.live === m; send({ t: 'live', mode: on ? 'off' : m, rgb: pickColor() }); S && (S.live = on ? 'off' : m); hold(); render(); }
+$('aBtn').onclick = () => liveToggle('audio');
+$('sBtn').onclick = () => liveToggle('screen');
+$('tgA').onclick = e => { e.stopPropagation(); liveToggle('audio'); };
+$('tgS').onclick = e => { e.stopPropagation(); liveToggle('screen'); };
+$('tAudio').onclick = () => setMode('audio');
+$('tScreen').onclick = () => setMode('screen');
+$('tNext').onclick = () => go('sched');
+document.querySelectorAll('#aMode b').forEach(b => b.onclick = () => { CFG.audioMode = b.dataset.v; send({ t: 'settings', audioMode: b.dataset.v }); renderLiveCfg(); });
+document.querySelectorAll('#sMode b').forEach(b => b.onclick = () => { CFG.screenEdges = b.dataset.v === '1'; send({ t: 'settings', screenEdges: CFG.screenEdges }); renderLiveCfg(); });
+slider($('aGain'), f => { CFG.audioGain = Math.round(f * 100); renderLiveCfg(); }, f => send({ t: 'settings', audioGain: Math.round(f * 100) }));
+slider($('sSat'), f => { CFG.screenSat = Math.round(f * 100); renderLiveCfg(); }, f => send({ t: 'settings', screenSat: Math.round(f * 100) }));
+
+function renderBright() {
+  const b = L ? L.bright : 0;
+  $('bval').innerHTML = (L ? b : '—') + '<small>%</small>';
+  $('barc').setAttribute('stroke-dasharray', `${Math.max(b, 0.01)} 100`);
+  const a = (135 + 270 * b / 100) * Math.PI / 180;
+  $('bkn').setAttribute('cx', 100 + 82 * Math.cos(a)); $('bkn').setAttribute('cy', 100 + 82 * Math.sin(a));
+}
+function curFx() { return L && L.effect != null ? (fxList().find(e => e.id === L.effect) || { id: L.effect, name: t('Ефект'), kind: 'other', cols: '*' }) : null; }
+function renderColor() {
+  const st = $('stage');
+  const on = L && L.power, fx = curFx();
+  st.classList.toggle('off', !on);
+  st.classList.toggle('fx', !!(on && L && L.effect != null));
+  if (L) {
+    if (L.effect == null) {
+      setLampColor(L.rgb);
+      $('nowLbl').textContent = !on ? 'Вимкнено' : S.live === 'audio' ? 'Світло за звуком' : S.live === 'screen' ? 'Колір з екрана' : 'Зараз світить';
+      $('cname').textContent = S.live === 'screen' && on ? 'Як на екрані' : colorName(L.rgb);
+      $('hex').textContent = hexOf(L.rgb);
+      const [h, s] = rgb2hsv(L.rgb);
+      if (!held()) { pick.h = s > .02 ? h : pick.h; pick.s = s; }
+    } else {
+      $('nowLbl').textContent = on ? 'Ефект' : 'Вимкнено';
+      $('cname').textContent = fx ? fx.name.split(' · ')[0] : 'Ефект';
+      $('hex').textContent = fx && fx.name.includes(' · ') ? fx.name.split(' · ').slice(1).join(' · ') : '';
+      const cols = fx ? fxColors(fx) : RAINBOW;
+      st.style.setProperty('--fxbg', `linear-gradient(180deg,${cols},${cols.split(',')[0]})`);
+      setLampColor(unhex(cols.split(',')[0].length === 7 ? cols.split(',')[0] : '#ff4fb0'));
+    }
+  }
+  const R = ($('wheel').offsetWidth || 180) / 2, r = R * pick.s, a = pick.h * Math.PI / 180;
+  $('knob').style.left = (50 + 50 * pick.s * Math.cos(a)) + '%'; $('knob').style.top = (50 + 50 * pick.s * Math.sin(a)) + '%';
+  $('knob').style.background = hexOf(pickColor());
+  const pc = hexOf(hsv2rgb(pick.h, 1));
+  $('wsl').style.background = `linear-gradient(90deg,${pc},#fff)`;
+  $('wsl').querySelector('i').style.left = ((1 - pick.s) * 100) + '%';
+  $('pwr').classList.toggle('off', !on);
+  renderBright();
+  renderFavs();
+}
+function renderFavs() {
+  const box = $('sw'); box.innerHTML = '';
+  const favs = CFG.favs || [], cur = L && L.effect == null ? hexOf(L.rgb).toLowerCase() : '';
+  favs.slice(0, 7).forEach((f, i) => {
+    const d = document.createElement('i'); d.style.background = f; d.title = f.toUpperCase();
+    if (f.toLowerCase() === cur) d.className = 'on';
+    d.onclick = () => { const c = unhex(f); [pick.h, pick.s] = rgb2hsv(c); applyPick(); };
+    d.oncontextmenu = e => { e.preventDefault(); const l = favs.slice(); l.splice(i, 1); CFG.favs = l; send({ t: 'favs', list: l }); renderFavs(); };
+    box.appendChild(d);
+  });
+  const a = document.createElement('i'); a.className = 'add'; a.title = 'Додати поточний колір';
+  a.innerHTML = '<svg class="i" style="width:14px;height:14px"><use href="#i-plus"/></svg>';
+  a.onclick = () => { const l = [hexOf(pickColor()).toLowerCase(), ...(CFG.favs || []).filter(x => x.toLowerCase() !== hexOf(pickColor()).toLowerCase())].slice(0, 7); CFG.favs = l; send({ t: 'favs', list: l }); renderFavs(); };
+  box.appendChild(a);
+}
+function renderWhites() {
+  const cur = L && L.effect == null ? hexOf(L.rgb) : '';
+  $('whites').innerHTML = WHITES.map(([n, c]) => `<div data-c="${c}" style="background:${c}" class="${c === cur ? 'on' : ''}">${n}</div>`).join('');
+  $('whites').querySelectorAll('div').forEach(d => d.onclick = () => { const c = unhex(d.dataset.c); if (L) { L.rgb = c; L.effect = null; } hold(); send({ t: 'color', rgb: c }); renderColor(); renderWhites(); });
+}
+function renderLiveCfg() {
+  document.querySelectorAll('#aMode b').forEach(b => b.classList.toggle('on', b.dataset.v === (CFG.audioMode || 'pulse')));
+  document.querySelectorAll('#sMode b').forEach(b => b.classList.toggle('on', (b.dataset.v === '1') === !!CFG.screenEdges));
+  setRng($('aGain'), (CFG.audioGain ?? 50) / 100); $('aGainV').textContent = (CFG.audioGain ?? 50) + '%';
+  setRng($('sSat'), (CFG.screenSat ?? 60) / 100); $('sSatV').textContent = (CFG.screenSat ?? 60) + '%';
+  const live = S ? S.live : 'off';
+  for (const [btn, m, a, b] of [['aBtn', 'audio', 'Увімкнути світло за звуком', 'Зупинити світло за звуком'], ['sBtn', 'screen', 'Увімкнути колір з екрана', 'Зупинити колір з екрана']]) {
+    $(btn).classList.toggle('stop', live === m); $(btn).querySelector('span').textContent = live === m ? b : a;
+  }
+  $('tgA').classList.toggle('on', live === 'audio'); $('tgS').classList.toggle('on', live === 'screen');
+  $('tAudio').classList.toggle('on-live', live === 'audio'); $('tScreen').classList.toggle('on-live', live === 'screen');
+}
+
+/* scenes */
+const SC_ICONS = { moon: 'i-moon', film: 'i-film', cam: 'i-cam', book: 'i-book', spark: 'i-spark', sun: 'i-sun', heart: 'i-heart', music: 'i-music', mon: 'i-mon', bulb: 'i-bulb' };
+function sceneBg(s) {
+  if (s.mode === 'screen') return 'linear-gradient(145deg,#3b2bd1,#2bb7ff)';
+  if (s.mode === 'audio') return `linear-gradient(145deg,${hexOf(s.rgb)},#ff3dc8)`;
+  if (s.mode === 'effect') return 'linear-gradient(145deg,#18c2a0,#2a7bff,#a64dff)';
+  const [h, sat, v] = rgb2hsv(s.rgb);
+  return `linear-gradient(145deg,${hexOf(hsv2rgb((h + 25) % 360, Math.min(1, sat), Math.max(v, .7)))},${hexOf(hsv2rgb((h + 345) % 360, Math.min(1, sat + .15), Math.max(v * .9, .6)))})`;
+}
+function sceneSub(s) { return (s.mode === 'screen' ? t('Колір з екрана') : s.mode === 'audio' ? t('Звук ПК') : s.mode === 'effect' ? t('Ефект') : t(colorName(s.rgb))) + ` · ${s.bright} %`; }
+function sceneCard(s, big) {
+  return `<div class="sc" data-id="${esc(s.id)}" style="background:${sceneBg(s)}"><svg class="i"${big ? ' style="width:22px;height:22px"' : ''}><use href="#${SC_ICONS[s.icon] || 'i-spark'}"/></svg>${big ? `<div>${esc(s.name)}<small>${esc(sceneSub(s))}</small></div><div class="x" title="Видалити"><svg class="i" style="width:14px;height:14px"><use href="#i-x"/></svg></div>` : esc(s.name)}</div>`;
+}
+function bindScenes(box) {
+  box.querySelectorAll('.sc').forEach(d => d.onclick = e => {
+    if (e.target.closest('.x')) { send({ t: 'sceneDel', id: d.dataset.id }); CFG.scenes = CFG.scenes.filter(s => s.id !== d.dataset.id); renderScenes(); return; }
+    send({ t: 'scene', id: d.dataset.id }); toast(t('Сцена') + ': ' + d.textContent.trim());
+  });
+}
+function renderScenes() {
+  const sc = CFG.scenes || [];
+  $('miniScenes').innerHTML = sc.slice(0, 4).map(s => `<div class="ms" data-id="${esc(s.id)}" title="${esc(sceneSub(s))}"><i style="background:${sceneBg(s)}"><svg class="i"><use href="#${SC_ICONS[s.icon] || 'i-spark'}"/></svg></i><span>${esc(s.name)}</span></div>`).join('');
+  $('miniScenes').querySelectorAll('.ms').forEach(d => d.onclick = () => { send({ t: 'scene', id: d.dataset.id }); toast(t('Сцена') + ': ' + d.textContent.trim()); });
+  let h = sc.map(s => sceneCard(s, true)).join('');
+  if (newScene) {
+    h += `<div class="newsc glass"><input id="nsName" maxlength="24" placeholder="Назва сцени" value="${esc(newScene.name)}"><div class="icons">${Object.keys(SC_ICONS).map(k => `<i data-k="${k}" class="${k === newScene.icon ? 'on' : ''}"><svg class="i" style="width:16px;height:16px"><use href="#${SC_ICONS[k]}"/></svg></i>`).join('')}</div><div class="row" style="margin-top:auto"><button class="btn pr" id="nsSave">Зберегти</button><button class="btn gh" id="nsCancel">Скасувати</button></div></div>`;
+  } else h += `<div class="addt" id="nsAdd" style="height:140px;border-radius:24px"><svg class="i" style="width:24px;height:24px"><use href="#i-plus"/></svg>Зберегти поточне світло</div>`;
+  $('scgrid').innerHTML = h;
+  bindScenes($('scgrid'));
+  if (newScene) {
+    const n = $('nsName'); n.focus(); n.oninput = () => newScene.name = n.value;
+    n.onkeydown = e => { if (e.key === 'Enter') $('nsSave').click(); if (e.key === 'Escape') $('nsCancel').click(); };
+    $('scgrid').querySelectorAll('.icons i').forEach(i => i.onclick = () => { newScene.icon = i.dataset.k; renderScenes(); });
+    $('nsSave').onclick = () => { const fx = curFx(); send({ t: 'sceneSave', name: newScene.name.trim() || t('Моя сцена'), icon: newScene.icon, rgb: pickColor(), fx: fx ? C.fx + ':' + fx.id : '' }); newScene = null; toast(t('Сцену збережено')); };
+    $('nsCancel').onclick = () => { newScene = null; renderScenes(); };
+  } else $('nsAdd').onclick = () => { newScene = { name: '', icon: 'heart' }; renderScenes(); };
+}
+
+/* effects */
+const GROUPS = [['all', 'Усі'], ['fav', '♥ Улюблені'], ['calm', 'Спокійні', ['breath', 'fade', 'wave', 'flow', 'solid', 'pulse']], ['rainbow', 'Веселка', ['rainbow']], ['run', 'Біг', ['comet', 'meteor', 'snake', 'spin', 'stack']], ['flash', 'Мерехтіння', ['strobe', 'stars', 'fire', 'jump']], ['sound', 'Звук лампи', ['sound']], ['other', 'Інші', ['other']]];
+function fxList() { if (C.fx === 'dyn') return (S.fxdyn || []).map((n, i) => ({ id: i, name: n, kind: 'other', cols: '*' })); const l = (window.FX || {})[C.fx] || []; return LANG === 'en' ? l.map(e => ({ ...e, name: e.en || e.name })) : l; }
+function fxColors(e) { const c = e.cols || ''; if (!c || c === '*') return RAINBOW; return c.split('').map(x => LETTER[x] || '#fff').join(','); }
+function fxPreview(e) {
+  const cols = fxColors(e), first = cols.split(',')[0], k = e.kind;
+  const dark = '#141030';
+  switch (k) {
+    case 'breath': case 'pulse': return `background:linear-gradient(90deg,${cols.split(',').length > 1 ? cols : first + ',' + first});animation:br 2.6s ease-in-out infinite`;
+    case 'strobe': return `background:linear-gradient(90deg,${cols.split(',').length > 1 ? cols : first + ',' + first});animation:fl .9s steps(1) infinite`;
+    case 'jump': return `background:linear-gradient(90deg,${cols});background-size:300% 100%;animation:run 2.4s steps(6) infinite`;
+    case 'fire': return `background:linear-gradient(90deg,${cols},${first});background-size:300% 100%;animation:run 5s linear infinite,tw 1.3s ease-in-out infinite`;
+    case 'comet': case 'meteor': case 'snake': case 'spin': return `background:linear-gradient(90deg,${dark} 0 30%,${cols.split(',').slice(0, 3).join(',')} 46%,#fff 50%,${dark} 54% 100%);background-size:300% 100%;animation:run 2.4s linear infinite`;
+    case 'stars': return `background:radial-gradient(circle at 18% 40%,${first} 0 3px,transparent 4px),radial-gradient(circle at 52% 70%,${cols.split(',').slice(-1)[0]} 0 2.5px,transparent 3.5px),radial-gradient(circle at 80% 30%,#fff 0 2px,transparent 3px),${dark};animation:tw 1.6s ease-in-out infinite`;
+    case 'stack': return `background:linear-gradient(90deg,${cols},${dark} 70%);background-size:300% 100%;animation:run 3s linear infinite`;
+    case 'sound': return `background:linear-gradient(90deg,${cols});background-size:300% 100%;animation:run 3s linear infinite,br 1s ease-in-out infinite`;
+    case 'other': return `background:linear-gradient(90deg,${cols === RAINBOW ? '#c9b8ff,#ff9fd2,#ffd29f,#c9b8ff' : cols});background-size:300% 100%;animation:run 6s linear infinite`;
+    default: return `background:linear-gradient(90deg,${cols},${first});background-size:300% 100%;animation:run 4s linear infinite`;
+  }
+}
+function renderFx() {
+  const all = fxList(), favs = CFG.fxFavs || [], key = id => C.fx + ':' + id;
+  const inGroup = (e, g) => g[0] === 'all' || (g[0] === 'fav' ? favs.includes(key(e.id)) : (g[2] || []).includes(e.kind));
+  const groups = GROUPS.filter(g => g[0] === 'all' || all.some(e => inGroup(e, g)));
+  if (!groups.some(g => g[0] === fxGroup)) fxGroup = 'all';
+  $('chips').innerHTML = groups.map(g => `<span class="chip ${g[0] === fxGroup ? 'on' : ''}" data-g="${g[0]}">${t(g[1])}${g[0] === 'all' ? ' · ' + all.length : ''}</span>`).join('');
+  $('chips').querySelectorAll('.chip').forEach(c => c.onclick = () => { fxGroup = c.dataset.g; renderFx(); });
+  const q = $('q').value.trim().toLowerCase();
+  const g = groups.find(x => x[0] === fxGroup);
+  const list = all.filter(e => inGroup(e, g) && (!q || e.name.toLowerCase().includes(q)));
+  if (!all.length) { $('fxg').innerHTML = `<div class="empty" style="grid-column:1/-1"><b>${C.fx === undefined ? 'Немає лампи' : 'Ця лампа не має вбудованих ефектів'}</b><div>Спробуйте сцени або світло за звуком ПК.</div></div>`; }
+  else $('fxg').innerHTML = list.map(e => {
+    const parts = e.name.split(' · ');
+    return `<div class="fc glass ${favs.includes(key(e.id)) ? 'fav' : ''} ${L && L.effect === e.id ? 'on' : ''}" data-id="${e.id}" title="${esc(e.name)}"><div class="pv" style="${fxPreview(e)}"></div><div class="nm"><div><span>${esc(parts[0])}</span><small>${esc(parts.slice(1).join(' · ') || (e.kind === 'sound' ? 'мікрофон лампи' : ' '))}</small></div><svg class="i" data-fav="1"><use href="#i-heart"/></svg></div></div>`;
+  }).join('') || '<div class="empty" style="grid-column:1/-1">Нічого не знайдено</div>';
+  $('fxg').querySelectorAll('.fc').forEach(c => c.onclick = e => {
+    const id = +c.dataset.id;
+    if (e.target.closest('[data-fav]')) { const k = key(id); const l = favs.includes(k) ? favs.filter(x => x !== k) : [...favs, k]; CFG.fxFavs = l; send({ t: 'settings', fxFavs: l }); renderFx(); return; }
+    hold(); if (L) { L.effect = id; L.power = true; } S && (S.live = 'off'); send({ t: 'effect', id }); renderFx(); renderColor();
+  });
+  $('spdRow').style.display = C.speed ? '' : 'none';
+  $('lenRow').style.display = C.length ? '' : 'none';
+  $('cycRow').style.display = C.cycle ? '' : 'none';
+  $('fxbar').style.display = C.speed || C.length || C.cycle ? '' : 'none';
+  if (L && !held()) {
+    setRng($('spd'), (L.speed || 50) / 100); $('spdV').textContent = L.speed || 50;
+    setRng($('len'), Math.min(1, (L.length || 1) / (C.length || 150))); $('lenV').textContent = L.length || 1;
+    $('cyc').classList.toggle('on', !!L.cycle);
+  }
+}
+$('q').oninput = renderFx;
+const sendSpeed = throttled(v => send({ t: 'speed', v }), 120);
+const sendLen = throttled(v => send({ t: 'length', v }), 120);
+slider($('spd'), f => { const v = Math.max(1, Math.round(f * 100)); setRng($('spd'), f); $('spdV').textContent = v; L && (L.speed = v); sendSpeed(v); });
+slider($('len'), f => { const v = Math.max(1, Math.round(f * (C.length || 150))); setRng($('len'), f); $('lenV').textContent = v; L && (L.length = v); sendLen(v); });
+$('cycRow').onclick = () => { if (!L) return; L.cycle = !L.cycle; hold(); send({ t: 'cycle', on: L.cycle }); renderFx(); };
+
+/* schedule */
+const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+const hm = sec => [Math.floor(sec / 3600), Math.floor(sec / 60) % 60];
+const pad = n => String(n).padStart(2, '0');
+function nowSec() { const d = new Date(); return [d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds(), (d.getDay() + 6) % 7]; }
+function nextEvent() {
+  const ts = (L && L.timers || []).filter(t => t.enabled);
+  if (!ts.length) return null;
+  const [now, wd] = nowSec(); let best = null;
+  for (const t of ts) for (let d = 0; d < 8; d++) {
+    const day = (wd + d) % 7, ok = t.days & 0x80 ? d < 2 : t.days & (1 << day);
+    if (!ok) continue; const dt = d * 86400 + t.sec - now;
+    if (dt > 0 && (!best || dt < best.dt)) best = { t, dt };
+  }
+  return best;
+}
+function onPeriods() {
+  // on/off intervals of today from the daily timers: a list of [from,to] hours
+  const ts = (L && L.timers || []).filter(t => t.enabled).sort((a, b) => a.sec - b.sec);
+  if (!ts.length) return [];
+  const [, wd] = nowSec();
+  const today = ts.filter(t => t.days & 0x80 || t.days & (1 << wd));
+  if (!today.length) return [];
+  let on = !today[today.length - 1].on ? false : true, from = 0, out = [];
+  for (const t of today) { const h = t.sec / 3600; if (on && !t.on) { out.push([from, h]); on = false; } else if (!on && t.on) { from = h; on = true; } }
+  if (on) out.push([from, 24]);
+  return out;
+}
+function renderDial() {
+  const s = $('dial'), cx = 125, cy = 125, R = 104;
+  const p = a => [cx + R * Math.sin(a / 24 * 2 * Math.PI), cy - R * Math.cos(a / 24 * 2 * Math.PI)];
+  const arc = (a0, a1) => { const [x0, y0] = p(a0), [x1, y1] = p(a1); return `M${x0} ${y0}A${R} ${R} 0 ${a1 - a0 > 12 ? 1 : 0} 1 ${x1} ${y1}`; };
+  let h = `<defs><linearGradient id="dg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c9b8ff"/><stop offset="1" stop-color="#ff7ac6"/></linearGradient></defs><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" style="stroke:var(--soft)" stroke-width="18"/>`;
+  for (const [a, b] of onPeriods()) if (b - a > .05) h += `<path d="${arc(a, Math.min(b, 23.999))}" fill="none" stroke="url(#dg)" stroke-width="18" stroke-linecap="round"/>`;
+  for (let i = 0; i < 24; i++) { const a = i / 24 * 2 * Math.PI, r1 = R - 17, r2 = R - (i % 6 ? 21 : 26); h += `<line x1="${cx + r1 * Math.sin(a)}" y1="${cy - r1 * Math.cos(a)}" x2="${cx + r2 * Math.sin(a)}" y2="${cy - r2 * Math.cos(a)}" style="stroke:${i % 6 ? 'var(--tgoff)' : 'var(--mu2)'}" stroke-width="1.5" stroke-linecap="round"/>`; }
+  [[0, '0'], [6, '6'], [12, '12'], [18, '18']].forEach(([v, t]) => { const a = v / 24 * 2 * Math.PI, r = R - 40; h += `<text x="${cx + r * Math.sin(a)}" y="${cy - r * Math.cos(a) + 4}" text-anchor="middle" font-size="11" style="fill:var(--mu)">${t}</text>`; });
+  for (const t of (L && L.timers || []).filter(t => t.enabled)) { const [x, y] = p(t.sec / 3600); h += `<circle cx="${x}" cy="${y}" r="5" style="fill:var(--card)" stroke="${t.on ? '#ff7ac6' : '#5d5880'}" stroke-width="2.5"/>`; }
+  const [ns] = nowSec(), [x, y] = p(ns / 3600); h += `<circle cx="${x}" cy="${y}" r="10" style="fill:var(--card);stroke:var(--ink)" stroke-width="3"/>`;
+  s.innerHTML = h;
+  const d = new Date(); $('clockNow').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+  const n = nextEvent(); $('clockSub').textContent = n ? t(n.t.on ? 'увімкнення о' : 'вимкнення о') + ' ' + hm(n.t.sec).map(pad).join(':') : t('таймерів немає');
+}
+function dueIn(dt) { const h = Math.floor(dt / 3600), m = Math.round(dt % 3600 / 60); return LANG === 'en' ? 'in ' + (h ? h + ' h ' : '') + m + ' min' : 'за ' + (h ? h + ' год ' : '') + m + ' хв'; }
+function renderNext() {
+  const n = nextEvent();
+  $('tNext').style.display = C.timers ? '' : 'none';
+  $('tiles').style.gridTemplateColumns = C.timers ? 'minmax(0,1.6fr) repeat(3,minmax(0,1fr))' : 'minmax(0,1.6fr) repeat(2,minmax(0,1fr))';
+  if (!n) { $('nextWhat').textContent = 'Таймерів немає'; $('nextT').textContent = '—'; $('nextIn').textContent = ''; $('nextArc').style.strokeDashoffset = 138.2; return; }
+  $('nextWhat').textContent = t(n.t.on ? 'Увімкнення' : 'Вимкнення') + (n.t.days === 0x7f ? ' · ' + t('щодня') : n.t.days & 0x80 ? ' · ' + t('раз') : '');
+  $('nextT').textContent = hm(n.t.sec).map(pad).join(':'); $('nextIn').textContent = dueIn(n.dt);
+  $('nextArc').style.strokeDashoffset = 138.2 * Math.min(1, n.dt / 86400);
+}
+function daysText(d) { if (d & 0x80) return 'один раз'; if (d === 0x7f) return 'щодня'; if (d === 0x1f) return 'по буднях'; if (d === 0x60) return 'на вихідних'; return DAYS.filter((_, i) => d & (1 << i)).join(', '); }
+function renderTimers() {
+  const has = !!C.timers;
+  $('noTimers').style.display = has ? 'none' : ''; $('schedBox').style.display = has ? '' : 'none';
+  if (!has) return;
+  renderDial();
+  const ts = (L && L.timers || []).slice().sort((a, b) => a.sec - b.sec);
+  let h = '';
+  for (const t of ts) {
+    if (editing && editing.idx === t.idx) { h += editor(); continue; }
+    const [hh, mm] = hm(t.sec);
+    h += `<div class="tm glass ${t.enabled ? '' : 'dis'}" data-idx="${t.idx}"><div class="tt">${pad(hh)}<small>:${pad(mm)}</small></div><div style="flex:1"><span class="act ${t.on ? 'on' : 'off'}">${t.on ? 'Увімкнути' : 'Вимкнути'}</span><div class="days">${DAYS.map((d, i) => `<i class="${t.days & 0x80 ? '' : t.days & (1 << i) ? 'on' : ''}">${d}</i>`).join('')}</div></div><div class="tg ${t.enabled ? 'on' : ''}" data-en="1"></div></div>`;
+  }
+  if (editing && editing.idx === -1) h += editor();
+  else h += `<div class="addt" id="tAdd"><svg class="i"><use href="#i-plus"/></svg>Додати таймер</div>`;
+  $('timers').innerHTML = h;
+  $('timers').querySelectorAll('.tm').forEach(r => r.onclick = e => {
+    const t = ts.find(x => x.idx === +r.dataset.idx);
+    if (e.target.closest('[data-en]')) { const n = { ...t, enabled: !t.enabled }; Object.assign(t, n); hold(1500); send({ t: 'timer', ...n }); renderTimers(); renderNext(); return; }
+    editing = { ...t }; renderTimers();
+  });
+  const add = $('tAdd'); if (add) add.onclick = () => { const used = new Set(ts.map(t => t.idx)); let idx = 0; while (used.has(idx)) idx++; editing = { idx: -1, newIdx: idx, on: true, days: 0x7f, sec: 18 * 3600, enabled: true }; renderTimers(); };
+  if (editing) bindEditor();
+}
+function editor() {
+  const [hh, mm] = hm(editing.sec);
+  return `<div class="edit glass"><div class="row"><div class="digits"><input id="eh" value="${pad(hh)}" maxlength="2" inputmode="numeric"><b>:</b><input id="em" value="${pad(mm)}" maxlength="2" inputmode="numeric"></div><div style="flex:1;display:flex;flex-direction:column;gap:10px;margin-left:10px"><div class="seg" id="eAct"><b data-v="1" class="${editing.on ? 'on' : ''}">Увімкнути</b><b data-v="0" class="${editing.on ? '' : 'on'}">Вимкнути</b></div><div class="seg" id="eRep"><b data-v="d" class="${editing.days & 0x80 ? '' : 'on'}">Повторювати</b><b data-v="o" class="${editing.days & 0x80 ? 'on' : ''}">Один раз</b></div></div></div><div class="days" id="eDays" style="${editing.days & 0x80 ? 'opacity:.35;pointer-events:none' : ''}">${DAYS.map((d, i) => `<i data-i="${i}" class="${!(editing.days & 0x80) && editing.days & (1 << i) ? 'on' : ''}">${d}</i>`).join('')}</div><div class="note">Коліщатко миші над цифрами змінює час. Таймер записується в лампу й працює без комп’ютера.</div><div class="row"><button class="btn pr" id="eSave">Зберегти</button><button class="btn gh" id="eCancel">Скасувати</button><div class="sp"></div>${editing.idx >= 0 ? '<button class="btn gh bad" id="eDel"><svg class="i"><use href="#i-trash"/></svg>Видалити</button>' : ''}</div></div>`;
+}
+function bindEditor() {
+  const eh = $('eh'), em = $('em');
+  const clamp = () => { const h = Math.min(23, Math.max(0, parseInt(eh.value) || 0)), m = Math.min(59, Math.max(0, parseInt(em.value) || 0)); editing.sec = h * 3600 + m * 60; };
+  for (const [el, max] of [[eh, 24], [em, 60]]) {
+    el.onwheel = e => { e.preventDefault(); const v = ((parseInt(el.value) || 0) + (e.deltaY < 0 ? 1 : -1) + max) % max; el.value = pad(v); clamp(); };
+    el.oninput = () => { el.value = el.value.replace(/\D/g, ''); clamp(); if (el === eh && el.value.length === 2) em.focus(); };
+    el.onblur = () => { el.value = pad(parseInt(el.value) || 0); clamp(); };
+    el.onfocus = () => el.select();
+    el.onkeydown = e => { if (e.key === 'Enter') $('eSave').click(); if (e.key === 'Escape') $('eCancel').click(); };
+  }
+  $('eAct').querySelectorAll('b').forEach(b => b.onclick = () => { editing.on = b.dataset.v === '1'; clamp(); renderTimers(); });
+  $('eRep').querySelectorAll('b').forEach(b => b.onclick = () => { editing.days = b.dataset.v === 'o' ? 0x80 : (editing.days & 0x7f) || 0x7f; clamp(); renderTimers(); });
+  $('eDays').querySelectorAll('i').forEach(d => d.onclick = () => { clamp(); const bit = 1 << +d.dataset.i; const nd = editing.days ^ bit; if (nd & 0x7f) editing.days = nd; renderTimers(); });
+  $('eCancel').onclick = () => { editing = null; renderTimers(); };
+  $('eSave').onclick = () => {
+    clamp(); const idx = editing.idx >= 0 ? editing.idx : editing.newIdx;
+    const t = { idx, on: editing.on, days: editing.days, sec: editing.sec, enabled: true };
+    if (L) { L.timers = (L.timers || []).filter(x => x.idx !== idx).concat([t]); }
+    hold(2000); send({ t: 'timer', ...t }); editing = null; renderTimers(); renderNext(); toast(t('Таймер записано в лампу'));
+  };
+  const del = $('eDel'); if (del) del.onclick = () => { const idx = editing.idx; if (L) L.timers = L.timers.filter(x => x.idx !== idx); hold(2000); send({ t: 'timerDel', idx }); editing = null; renderTimers(); renderNext(); };
+  eh.focus();
+}
+setInterval(() => { if (page === 'sched' && C.timers && !editing) renderDial(); if (page === 'light') renderNext(); }, 30000);
+
+/* lamps list, header, devices */
+const lampIcon = l => /strip|wled|стрічк/i.test(l.name + l.model) ? 'i-strip' : /bulb|hue|lifx|wiz|yeelight/i.test(l.model) ? 'i-bulb2' : 'i-lamp';
+const netTag = n => n === 'ble' ? '<span class="tag bt"><svg class="i"><use href="#i-bt"/></svg>Bluetooth</span>' : '<span class="tag wf"><svg class="i"><use href="#i-wifi"/></svg>Wi-Fi</span>';
+function bars(rssi) { if (rssi == null) return ''; const n = rssi > -60 ? 4 : rssi > -70 ? 3 : rssi > -80 ? 2 : 1; return `<span class="sig" title="${rssi} ${t('дБм')}">${[4, 7, 10, 12].map((h, i) => `<i class="${i < n ? 'on' : ''}" style="height:${h}px"></i>`).join('')}</span>`; }
+function lampStatus(l) {
+  if (l.active && !l.paused) { if (S.conn === 'on') return ['ok', 'Зв’язок']; if (S.conn === 'connecting') return ['wait', 'Підключаюсь…']; if (S.err) return ['bad', 'Немає зв’язку']; return ['', l.near ? 'Поруч' : 'Готова']; }
+  if (l.paused) return ['', 'Відключено'];
+  return ['', l.near ? 'Поруч' : (l.net === 'ble' ? 'Поза зоною' : 'Готова')];
+}
+function renderLamps() {
+  const ls = S.lamps || [];
+  $('lamps').innerHTML = ls.map(l => {
+    const [cls, txt] = lampStatus(l);
+    const st = l.active && L ? (L.power ? t('увімкнено') + ' · ' + L.bright + ' %' : t('вимкнено')) : t(txt).toLowerCase();
+    const bg = l.active && L && L.power ? 'background:linear-gradient(145deg,var(--lamp),var(--lamp2));color:#fff' : '';
+    return `<div class="lp ${l.active ? 'on' : ''}" data-id="${esc(l.id)}"><div class="dot" style="${bg}"><svg class="i" style="width:15px;height:15px"><use href="#${lampIcon(l)}"/></svg></div><div><b>${esc(l.name)}</b><small><svg class="i"><use href="#${l.net === 'ble' ? 'i-bt' : 'i-wifi'}"/></svg>${esc(st)}</small></div></div>`;
+  }).join('') || '<div class="note" style="padding:4px 12px">Ще немає ламп</div>';
+  $('lamps').querySelectorAll('.lp').forEach(d => d.onclick = () => { if (!d.classList.contains('on')) { send({ t: 'select', id: d.dataset.id }); hold(300); } go('light'); });
+}
+function errText(e) {
+  if (e === 'hue-button') return 'Натисніть кнопку на мосту Philips Hue, потім ще раз «Підключити».';
+  if (e === 'nanoleaf-button') return 'Утримуйте кнопку живлення Nanoleaf 5–7 секунд, доки не замигає, потім ще раз «Підключити».';
+  if (/not found|does not answer|not reachable|0x8000|status|timed out|refused|unreachable/i.test(e)) return 'Лампа не відповідає. Можливо, до неї підключений телефон (лампа приймає лише одне з’єднання) або вона далеко чи вимкнена з розетки.';
+  if (/unknown protocol/i.test(e)) return 'Vice Glow не знає, як говорити з цією лампою.';
+  return e;
+}
+function renderHeader() {
+  const l = (S.lamps || []).find(x => x.active);
+  if (!$('title').isContentEditable) $('title').textContent = page === 'set' ? 'Налаштування' : page === 'dev' ? 'Пристрої' : l ? l.name : 'Vice Glow';
+  let h = '';
+  if (l && page !== 'dev' && page !== 'set') {
+    const [cls, txt] = lampStatus(l);
+    h += `<span class="pill ${cls === 'ok' ? 'ok' : cls === 'wait' ? 'wait' : 'off'}">${txt}</span>`;
+    h += `<span class="pill"><svg class="i"><use href="#${l.net === 'ble' ? 'i-bt' : 'i-wifi'}"/></svg>${esc(l.model || l.family)}</span>`;
+    if (!l.verified) h += '<span class="pill warn" title="Протокол узято з відкритих проєктів; на цій моделі Vice Glow ще не перевіряли">не перевірено</span>';
+    if (S.err && S.conn !== 'on' && !l.paused) h += `<span class="pill warn">${esc(t(errText(S.err))).slice(0, 80)}</span>`;
+  }
+  $('sub').innerHTML = h;
+  $('pwr').style.visibility = l && page !== 'dev' && page !== 'set' ? '' : 'hidden';
+  $('ren').style.display = l && page !== 'dev' && page !== 'set' ? '' : 'none';
+}
+function startRename() { const l = (S.lamps || []).find(x => x.active); if (!l || page === 'dev' || page === 'set') return; const t = $('title'); t.contentEditable = 'true'; t.focus(); document.getSelection().selectAllChildren(t); }
+$('title').ondblclick = startRename;
+$('ren').onclick = startRename;
+$('title').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('title').blur(); } if (e.key === 'Escape') { $('title').dataset.cancel = '1'; $('title').blur(); } };
+$('title').onblur = () => { const h = $('title'); if (!h.isContentEditable) return; h.contentEditable = 'false'; const l = (S.lamps || []).find(x => x.active); const v = h.textContent.trim(); if (!h.dataset.cancel && l && v && v !== l.name) { l.name = v; send({ t: 'rename', id: l.id, name: v }); renameNote(l); } delete h.dataset.cancel; render(); };
+function renameNote(l) { toast(t(l && l.active && C.rename ? 'Назву записано в лампу' : 'Назву змінено у Vice Glow')); }
+function devRow(l, saved) {
+  const status = saved ? lampStatus(l) : [l.family === 'unknown' ? '' : 'ok', l.family === 'unknown' ? 'Протокол невідомий' : l.family === 'hue_bridge' ? 'Міст Hue' : l.net === 'ble' ? 'Поруч' : 'У мережі'];
+  const model = l.family === 'unknown' ? 'протокол невідомий' : esc(l.model || l.family);
+  let btn;
+  if (!saved) btn = l.family === 'unknown' ? '<button class="btn gh" data-act="how">Як додати</button>' : '<button class="btn pr" data-act="connect">Підключити</button>';
+  else if (l.paused) btn = '<button class="btn pr" data-act="connect">Підключити</button>';
+  else if (l.active) btn = '<button class="btn gh" data-act="disconnect">Відключити</button>';
+  else btn = '<button class="btn gh" data-act="connect">Підключити</button>';
+  const power = saved && l.active && !l.paused && L ? `<div class="tg ${L.power ? 'on' : ''}" data-act="power" title="Світло"></div>` : '';
+  const ver = l.verified || l.family === 'unknown' ? '' : '<span class="tag nv">не перевірено</span>';
+  return `<div class="dv glass ${l.family === 'unknown' ? 'unk' : ''}" data-id="${esc(l.id)}"><div class="ic"${l.active && L && L.power ? ' style="background:linear-gradient(145deg,var(--lamp),var(--lamp2));color:#fff"' : ''}><svg class="i"><use href="#${lampIcon(l)}"/></svg></div><div><b>${esc(l.name || l.model)}</b><small>${netTag(l.net)}${model} ${bars(l.rssi)} ${ver}</small></div><span class="st ${status[0]}">${status[1]}</span><div class="row">${btn}${power}</div>${saved ? '<div class="rn"><div class="more" data-act="rename" title="Перейменувати"><svg class="i"><use href="#i-pen"/></svg></div><div class="more" data-act="forget" title="Забути лампу"><svg class="i"><use href="#i-trash"/></svg></div></div>' : '<span></span>'}</div>`;
+}
+function renderDevices() {
+  $('scanBox').classList.toggle('scanning', !!S.scanning);
+  $('scanT').textContent = S.scanning ? 'Шукаю лампи поруч…' : 'Пошук зупинено';
+  const saved = S.lamps || [], found = (S.found || []).slice().sort((a, b) => (a.family === 'unknown') - (b.family === 'unknown') || (b.rssi || -99) - (a.rssi || -99));
+  let h = `<div class="dh">Мої лампи</div>` + (saved.map(l => devRow(l, true)).join('') || '<div class="note" style="padding:0 6px">Ще немає — оберіть лампу нижче.</div>');
+  h += `<div class="dh">Знайдено поруч</div>` + (found.map(l => devRow(l, false)).join('') || '<div class="note" style="padding:0 6px">Поки нічого. Увімкніть лампу й закрийте її додаток на телефоні: більшість ламп приймає лише одне з’єднання.</div>');
+  $('dl').innerHTML = h;
+  const err = S.err && (S.err === 'hue-button' || S.err === 'nanoleaf-button' || S.conn !== 'on') ? errText(S.err) : '';
+  $('devHint').style.display = err ? '' : 'none'; $('devHint').textContent = t(err);
+  $('dl').querySelectorAll('[data-act]').forEach(b => b.onclick = e => {
+    e.stopPropagation(); const id = b.closest('.dv').dataset.id, a = b.dataset.act;
+    if (a === 'power') { if (L) { L.power = !L.power; hold(); send({ t: 'power', on: L.power }); render(); } return; }
+    if (a === 'how') { $('devHint').style.display = ''; $('devHint').textContent = 'Vice Glow не знає протоколу цієї лампи. Можна додати її так само, як BanlanX: увімкнути на телефоні «Журнал Bluetooth HCI», покерувати лампою з її додатка й надіслати звіт про помилку — з нього видно команди.'; return; }
+    if (a === 'rename') {
+      const row = b.closest('.dv'), nameEl = row.querySelector('b'), old = nameEl.textContent;
+      const inp = document.createElement('input'); inp.className = 'nm'; inp.value = old; inp.maxLength = 32;
+      nameEl.replaceWith(inp); inp.focus(); inp.select(); hold(60000);
+      let done = false;
+      const finish = ok => { if (done) return; done = true; holdUntil = 0; const v = inp.value.trim(); if (ok && v && v !== old) { const l = (S.lamps || []).find(x => x.id === id); if (l) l.name = v; send({ t: 'rename', id, name: v }); renameNote(l); } render(); };
+      inp.onkeydown = e => { if (e.key === 'Enter') finish(true); if (e.key === 'Escape') finish(false); };
+      inp.onblur = () => finish(true);
+      return;
+    }
+    if (a === 'forget' && !confirm(t('Забути цю лампу? Її можна буде знайти й підключити знову.'))) return;
+    send({ t: a, id }); hold(300);
+    if (a === 'connect') toast(t('Підключаю…'));
+  });
+}
+
+/* settings */
+const darkMq = matchMedia('(prefers-color-scheme: dark)');
+function applyTheme() { const t = CFG.theme || 'light'; document.documentElement.dataset.theme = t === 'system' ? (darkMq.matches ? 'dark' : 'light') : t; }
+darkMq.onchange = applyTheme;
+document.querySelectorAll('#theme b').forEach(b => b.onclick = () => { CFG.theme = b.dataset.v; applyTheme(); send({ t: 'settings', theme: b.dataset.v }); renderSettings(); });
+$('ghLink').onclick = () => send({ t: 'open', url: 'https://github.com/Fenderenko/ViceGlow' });
+document.querySelectorAll('#lang b').forEach(b => b.onclick = () => { CFG.lang = b.dataset.v; applyLang(); send({ t: 'settings', lang: b.dataset.v }); render(); });
+$('autoRow').onclick = () => { CFG.autostart = !CFG.autostart; send({ t: 'settings', autostart: CFG.autostart }); renderSettings(); };
+$('gamma2Row').onclick = () => { CFG.gamma = !CFG.gamma; send({ t: 'settings', gamma: CFG.gamma }); renderSettings(); };
+slider($('step'), f => { CFG.step = Math.max(1, Math.round(f * 25)); renderSettings(); }, () => send({ t: 'settings', step: CFG.step }));
+const sendCal = throttled(g => send({ t: 'cal', gains: g }), 150);
+let cal = [1, 1, 1];
+['calR', 'calG', 'calB'].forEach((id, i) => slider($(id), f => { cal[i] = Math.max(.2, Math.round(f * 100) / 100); renderSettings(); sendCal(cal.slice()); }));
+const ORDERS = ['RGB', 'RBG', 'GRB', 'GBR', 'BRG', 'BGR'];
+function renderSettings() {
+  $('auto').classList.toggle('on', !!CFG.autostart);
+  document.querySelectorAll('#theme b').forEach(b => b.classList.toggle('on', b.dataset.v === (CFG.theme || 'light')));
+  document.querySelectorAll('#lang b').forEach(b => b.classList.toggle('on', b.dataset.v === (CFG.lang || 'en')));
+  $('gamma').classList.toggle('on', !!CFG.gamma); $('gamma2').classList.toggle('on', !!CFG.gamma);
+  setRng($('step'), (CFG.step || 10) / 25); $('stepV').textContent = (CFG.step || 10) + '%';
+  const l = (S.lamps || []).find(x => x.active);
+  $('calCard').style.display = l ? '' : 'none';
+  if (l && !held()) cal = (l.cal || [1, 1, 1]).slice();
+  [['calR', 0], ['calG', 1], ['calB', 2]].forEach(([id, i]) => { setRng($(id), cal[i]); $(id + 'V').textContent = Math.round(cal[i] * 100) + '%'; });
+  $('orderRow').style.display = C.order ? '' : 'none';
+  $('order').innerHTML = ORDERS.map((o, i) => `<b data-v="${i}" class="${L && L.order === i ? 'on' : ''}">${o}</b>`).join('');
+  $('order').querySelectorAll('b').forEach(b => b.onclick = () => { if (L) L.order = +b.dataset.v; hold(); send({ t: 'order', v: +b.dataset.v }); renderSettings(); });
+  $('aboutVer').textContent = 'Vice Glow ' + (S.ver || '') + ' · ' + t('керування світлодіодними лампами з комп’ютера.');
+}
+
+/* state */
+function render() {
+  if (!S) return;
+  renderHeader(); renderLamps();
+  const has = !!(S.lamps || []).find(x => x.active);
+  $('noLamp').style.display = has ? 'none' : ''; $('hero').style.display = has ? '' : 'none'; $('tiles').style.display = has ? '' : 'none';
+  $('seg').querySelector('[data-m=white]').style.display = C.color === false ? 'none' : '';
+  $('gamma').classList.toggle('on', !!CFG.gamma);
+  if (page === 'light') { renderColor(); renderWhites(); renderLiveCfg(); renderNext(); renderScenes(); }
+  if (page === 'fx') renderFx();
+  if (page === 'scenes') renderScenes();
+  if (page === 'sched' && !editing) renderTimers();
+  if (page === 'dev') renderDevices();
+  if (page === 'set') renderSettings();
+}
+function onState(m) {
+  if (!m || m.t !== 'state') return;
+  const keep = held() && S && S.lamp === m.lamp ? L : null;
+  S = m; C = m.caps || {}; CFG = m.cfg || {};
+  applyTheme(); applyLang();
+  L = keep || (m.st ? JSON.parse(JSON.stringify(m.st)) : null);
+  render();
+}
+if (host) { chrome.webview.addEventListener('message', e => onState(e.data)); send({ t: 'ready' }); }
+
+/* a page opened in a browser (design checks): sample data */
+function mockSend(m) {
+  const s = window._mock; if (!s) return;
+  if (m.t === 'power') s.st.power = m.on;
+  if (m.t === 'bright') s.st.bright = m.v;
+  if (m.t === 'color') { s.st.rgb = m.rgb; s.st.effect = null; s.live = 'off'; }
+  if (m.t === 'effect') { s.st.effect = m.id; s.live = 'off'; }
+  if (m.t === 'live') s.live = m.mode;
+  if (m.t === 'scan') s.scanning = m.on;
+  if (m.t === 'select') s.lamps.forEach(l => l.active = l.id === m.id);
+  if (m.t === 'settings') Object.assign(s.cfg, m);
+  if (m.t === 'favs') s.cfg.favs = m.list;
+  setTimeout(() => onState(JSON.parse(JSON.stringify(s))), 30);
+}
+if (!host) (async () => {
+  if (!window.FX) try { window.FX = await (await fetch('fx.json?' + Date.now())).json(); } catch (e) { window.FX = {}; }
+  window._mock = {
+    t: 'state', ver: '0.2.0', lamp: 'ble:1', conn: 'on', err: '', scanning: false, live: 'off', fxdyn: [],
+    caps: { state: true, color: true, fx: 'banlanx2', speed: true, length: 150, order: true, cycle: true, timers: true },
+    st: { power: true, bright: 78, rgb: [255, 106, 26], effect: null, speed: 60, length: 120, order: 2, cycle: false, timers: [{ idx: 0, on: true, days: 127, sec: 16 * 3600 + 300, enabled: true }, { idx: 1, on: false, days: 127, sec: 3 * 3600, enabled: true }, { idx: 2, on: true, days: 3, sec: 7 * 3600 + 1800, enabled: false }] },
+    lamps: [{ id: 'ble:1', name: 'Торшер', model: 'SP621E', family: 'banlanx2', net: 'ble', paused: false, active: true, near: true, rssi: -58, verified: true, cal: [1, .92, .85] }, { id: 'wled:1', name: 'Стрічка за ПК', model: 'WLED', family: 'wled', net: 'wifi', paused: false, active: false, near: true, rssi: null, verified: false }, { id: 'ble:2', name: 'Нічник', model: 'ELK (ELK-BLEDOM)', family: 'elk', net: 'ble', paused: true, active: false, near: false, rssi: null, verified: false }],
+    found: [{ id: 'ble:3', name: 'SP638E', model: 'SP638E', family: 'sptech', net: 'ble', rssi: -71, verified: false }, { id: 'govee_lan:1', name: 'Govee H6076', model: 'Govee H6076', family: 'govee_lan', net: 'wifi', rssi: null, verified: false }, { id: 'ble:4', name: 'LED Lamp 7', model: '', family: 'unknown', net: 'ble', rssi: -84, verified: false }],
+    cfg: { favs: ['#ff1a1a', '#ff6a1a', '#ffc400', '#18e05a', '#00c2ff', '#2a3bff', '#a100ff'], step: 10, autostart: true, gamma: true, audioMode: 'pulse', audioGain: 50, screenEdges: false, screenSat: 60, fxFavs: ['banlanx2:1', 'banlanx2:18'], scenes: [{ id: 'evening', name: 'Вечір', icon: 'moon', mode: 'color', rgb: [255, 120, 40], bright: 40 }, { id: 'movie', name: 'Кіно', icon: 'film', mode: 'screen', rgb: [0, 0, 0], bright: 35 }, { id: 'stream', name: 'Стрім', icon: 'cam', mode: 'audio', rgb: [150, 70, 255], bright: 80 }, { id: 'reading', name: 'Читання', icon: 'book', mode: 'color', rgb: [255, 196, 140], bright: 90 }, { id: 'party', name: 'Вечірка', icon: 'spark', mode: 'effect', rgb: [0, 0, 0], bright: 100 }] },
+  };
+  // design checks and README pictures: ?p=<page>&lang=en&theme=dark&shot=1
+  const q = new URLSearchParams(location.search);
+  if (q.get('lang')) _mock.cfg.lang = q.get('lang');
+  if (q.get('theme')) _mock.cfg.theme = q.get('theme');
+  if (q.get('shot')) { const st = document.createElement('style'); st.textContent = '*,*::before,*::after{animation-play-state:paused!important;transition:none!important}.page.on{animation:none!important}'; document.head.appendChild(st); _mock.lamps[0].name = q.get('lang') === 'en' ? 'Floor lamp' : 'Торшер'; _mock.lamps[1].name = q.get('lang') === 'en' ? 'Desk strip' : 'Стрічка за ПК'; _mock.lamps[2].name = q.get('lang') === 'en' ? 'Night light' : 'Нічник'; }
+  if (q.get('fx')) _mock.st.effect = +q.get('fx');
+  const p = q.get('p'); if (p) go(p);
+  onState(JSON.parse(JSON.stringify(window._mock)));
+})();
+</script>
+</body>
+</html>
