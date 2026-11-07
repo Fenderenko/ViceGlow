@@ -32,6 +32,9 @@ use crate::{
 
 const IDLE: Duration = Duration::from_secs(20);
 const RETRY: Duration = Duration::from_secs(5);
+/// a connection attempt longer than this counts as failed (Windows may wait much longer for a
+/// lamp that is away or held by a phone); a late result is dropped
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(12);
 /// writes settle this long before the state is read back
 const SETTLE: Duration = Duration::from_millis(250);
 const KEEPALIVE: Duration = Duration::from_secs(2);
@@ -95,12 +98,25 @@ enum Msg {
     Scan(bool),
     Notify(Vec<u8>, u64),
     Net(Vec<NetFound>),
+    /// a connection attempt (made on its own thread) finished; stale ones are dropped
+    Opened(u64, Result<Opened, String>),
     Quit,
+}
+
+/// What a finished connection attempt hands to the engine.
+struct Opened {
+    link: Link,
+    caps: Caps,
+    st: State,
+    has_state: bool,
+    fx: Vec<String>,
 }
 
 static TX: OnceLock<Mutex<Sender<Msg>>> = OnceLock::new();
 static SNAP: Mutex<Option<Snap>> = Mutex::new(None);
 static FOUND: Mutex<Vec<Found>> = Mutex::new(Vec::new());
+/// a connection thread is still inside Windows (even after its timeout): no second one meanwhile
+static OPENING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 pub fn snapshot() -> Snap {
     SNAP.lock().unwrap().clone().unwrap_or(Snap { lamp: String::new(), conn: Conn::Off, err: String::new(), state: None, caps: Caps::default(), fxdyn: Vec::new(), scanning: false })
@@ -246,6 +262,9 @@ struct Worker {
     watcher: Option<BluetoothLEAdvertisementWatcher>,
     net_scan_at: Option<Instant>,
     net_scanning: bool,
+    /// a connection attempt is running (generation gen_), since when
+    connecting: bool,
+    connect_at: Option<Instant>,
 }
 
 impl Worker {
@@ -312,7 +331,12 @@ impl Worker {
                 if self.lamp.as_ref().is_some_and(|l| l.id == id) {
                     self.close("disconnected by the user");
                     self.lamp = config::lamp(&id);
-                    changed(|s| s.conn = Conn::Off);
+                    self.pending.clear();
+                    self.acts.clear();
+                    changed(|s| {
+                        s.conn = Conn::Off;
+                        s.err.clear();
+                    });
                 }
             }
             Msg::Scan(on) => {
@@ -346,6 +370,46 @@ impl Worker {
                 }
                 drop(f);
                 util::post_ui(crate::WM_STATE, 0);
+            }
+            Msg::Opened(g, r) => {
+                if g != self.gen_ {
+                    return; // cancelled meanwhile (another lamp, "Disconnect"); dropping closes it
+                }
+                self.connecting = false;
+                let live = crate::live::active();
+                match r {
+                    Ok(o) => {
+                        self.link = Some(o.link);
+                        self.caps = o.caps.clone();
+                        self.st = o.st;
+                        self.has_state = o.has_state;
+                        self.need_query = true;
+                        self.retry_at = None;
+                        self.last_keep = Some(Instant::now());
+                        let fx = o.fx;
+                        changed(|s| {
+                            s.conn = Conn::On;
+                            s.err.clear();
+                            s.caps = o.caps;
+                            s.fxdyn = fx;
+                        });
+                        self.publish();
+                    }
+                    Err(e) => {
+                        let name = self.lamp.as_ref().map(|l| l.name.clone()).unwrap_or_default();
+                        logf!("lamp '{name}': {e}");
+                        self.retry_at = Some(Instant::now() + RETRY);
+                        if !self.awake && !live {
+                            self.pending.clear();
+                            self.acts.clear();
+                            self.need_query = false;
+                        }
+                        changed(|s| {
+                            s.conn = Conn::Off;
+                            s.err = e;
+                        });
+                    }
+                }
             }
             Msg::Quit => {}
         }
@@ -409,8 +473,12 @@ impl Worker {
     fn close(&mut self, why: &str) {
         if self.link.take().is_some() {
             logf!("lamp: disconnected ({why})");
-            self.gen_ += 1;
+        } else if self.connecting {
+            logf!("lamp: connection attempt dropped ({why})");
         }
+        // a new generation also cancels a connection attempt still running
+        self.gen_ += 1;
+        self.connecting = false;
         self.stream_ok = false;
     }
 
@@ -428,35 +496,47 @@ impl Worker {
             return;
         }
         let want = self.awake || live || !self.pending.is_empty() || !self.acts.is_empty() || self.need_query;
-        if want && self.link.is_none() && self.retry_at.is_none_or(|t| Instant::now() >= t) {
+        if want && self.link.is_none() && !self.connecting && !OPENING.load(std::sync::atomic::Ordering::Relaxed) && self.retry_at.is_none_or(|t| Instant::now() >= t) {
             changed(|s| {
                 s.conn = Conn::Connecting;
                 s.err.clear();
             });
-            match self.open(&lamp) {
-                Ok(()) => {
-                    self.need_query = true;
-                    self.retry_at = None;
-                    self.last_keep = Some(Instant::now());
-                    changed(|s| {
-                        s.conn = Conn::On;
-                        s.err.clear();
-                    });
-                }
-                Err(e) => {
-                    logf!("lamp '{}': {e}", lamp.name);
-                    self.retry_at = Some(Instant::now() + RETRY);
-                    if !self.awake && !live {
-                        self.pending.clear();
-                        self.acts.clear();
-                        self.need_query = false;
-                    }
-                    changed(|s| {
-                        s.conn = Conn::Off;
-                        s.err = e;
-                    });
-                }
+            // the attempt may take many seconds (lamp away or held by the phone): it runs on its own
+            // thread, so "Disconnect", another lamp and the window stay responsive
+            self.gen_ += 1;
+            self.connecting = true;
+            self.connect_at = Some(Instant::now());
+            logf!("lamp: connecting '{}'", lamp.name);
+            if lamp.is_ble()
+                && let Some(w) = self.watcher.take()
+            {
+                let _ = w.Stop(); // active scanning slows the connection down; it resumes afterwards
             }
+            let (g, tx, lamp) = (self.gen_, self.tx.clone().unwrap(), lamp.clone());
+            OPENING.store(true, std::sync::atomic::Ordering::Relaxed);
+            std::thread::spawn(move || {
+                unsafe {
+                    let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
+                }
+                let r = open_link(&lamp, tx.clone(), g);
+                OPENING.store(false, std::sync::atomic::Ordering::Relaxed);
+                let _ = tx.send(Msg::Opened(g, r));
+            });
+        }
+        if self.connecting && self.connect_at.is_some_and(|t| t.elapsed() > CONNECT_TIMEOUT) {
+            logf!("lamp '{}': no answer in {} s", lamp.name, CONNECT_TIMEOUT.as_secs());
+            self.gen_ += 1;
+            self.connecting = false;
+            self.retry_at = Some(Instant::now() + RETRY);
+            if !self.awake && !live {
+                self.pending.clear();
+                self.acts.clear();
+                self.need_query = false;
+            }
+            changed(|s| {
+                s.conn = Conn::Off;
+                s.err = "lamp does not answer".into();
+            });
         }
         if self.link.is_none() {
             return;
@@ -588,83 +668,8 @@ impl Worker {
         }
     }
 
-    fn open(&mut self, lamp: &Lamp) -> Result<(), String> {
-        self.gen_ += 1;
-        self.has_state = false;
-        self.st = State { bright: 100, speed: 50, length: 60, ..Default::default() };
-        if lamp.is_ble() {
-            let dev = gatt::open(lamp.addr)?;
-            let name = if dev.name.is_empty() { lamp.name.clone() } else { dev.name.clone() };
-            let mut picked = None;
-            for fam in drv::candidates(&lamp.family, &name) {
-                let Some(d) = drv::make_ble(fam, &lamp.model, &name) else { continue };
-                let g = d.gatt();
-                if let Some(w0) = dev.find(&g.write) {
-                    picked = Some((fam, d, g, w0));
-                    break;
-                }
-            }
-            let Some((fam, mut d, g, w0)) = picked else { return Err("unknown protocol: no known characteristic".into()) };
-            if fam != lamp.family {
-                logf!("lamp '{}': {} protocol", lamp.name, fam);
-                config::update(|c| {
-                    if let Some(l) = c.lamps.iter_mut().find(|l| l.id == lamp.id) {
-                        l.family = fam.into();
-                    }
-                });
-            }
-            let w1 = g.write2.and_then(|u| dev.find(&[u]));
-            let mut ntf = None;
-            if let Some(c) = dev.find(&g.notify) {
-                match gatt::subscribe(&c, self.tx.clone().unwrap(), |v, g| Msg::Notify(v, g), self.gen_) {
-                    Ok(t) => ntf = Some((c, t)),
-                    Err(e) => logf!("lamp: {e}"),
-                }
-            }
-            let hello = d.hello();
-            for (i, (_, f)) in hello.iter().enumerate() {
-                gatt::write(&w0, f, g.response)?;
-                if i + 1 < hello.len() {
-                    std::thread::sleep(Duration::from_millis(300));
-                }
-            }
-            self.caps = d.caps();
-            logf!("lamp: connected '{name}' {:012x} ({fam})", lamp.addr);
-            self.link = Some(Link::Ble { _dev: dev, w0, w1, ntf, drv: d, g });
-        } else {
-            let mut extra = lamp.extra.clone();
-            if lamp.family == "nanoleaf" && extra["token"].as_str().unwrap_or("").is_empty() {
-                match drv::net_nanoleaf::pair(&lamp.host) {
-                    Ok(t) => {
-                        extra = json!({ "token": t });
-                        let e2 = extra.clone();
-                        config::update(|c| {
-                            if let Some(l) = c.lamps.iter_mut().find(|l| l.id == lamp.id) {
-                                l.extra = e2;
-                            }
-                        });
-                    }
-                    Err(e) => return Err(if e == "pair" { "nanoleaf-button".into() } else { e }),
-                }
-            }
-            let mut d = drv::make_net(&lamp.family, &lamp.host, &extra).ok_or("unknown protocol")?;
-            self.caps = d.caps();
-            if self.caps.state && d.refresh(&mut self.st)? {
-                self.has_state = true;
-            }
-            let fx = if self.caps.fx == "dyn" { d.effects() } else { Vec::new() };
-            changed(|s| s.fxdyn = fx);
-            logf!("lamp: connected '{}' {} ({})", lamp.name, lamp.host, lamp.family);
-            self.link = Some(Link::Net { drv: d });
-        }
-        let caps = self.caps.clone();
-        changed(|s| s.caps = caps);
-        self.publish();
-        Ok(())
-    }
-
     fn scan_step(&mut self) {
-        if self.scan && self.watcher.is_none() {
+        if self.scan && self.watcher.is_none() && !self.connecting {
             self.watcher = start_watcher();
         } else if !self.scan
             && let Some(w) = self.watcher.take()
@@ -682,6 +687,76 @@ impl Worker {
             });
         }
     }
+}
+
+/// Connects to `lamp` (blocking; run on its own thread). Notifications are tagged with `generation`.
+fn open_link(lamp: &Lamp, tx: Sender<Msg>, generation: u64) -> Result<Opened, String> {
+    let mut st = State { bright: 100, speed: 50, length: 60, ..Default::default() };
+    let mut has_state = false;
+    if lamp.is_ble() {
+        let t = Instant::now();
+        let dev = gatt::open(lamp.addr)?;
+        let name = if dev.name.is_empty() { lamp.name.clone() } else { dev.name.clone() };
+        let mut picked = None;
+        for fam in drv::candidates(&lamp.family, &name) {
+            let Some(d) = drv::make_ble(fam, &lamp.model, &name) else { continue };
+            let g = d.gatt();
+            if let Some(w0) = dev.find(&g.write) {
+                picked = Some((fam, d, g, w0));
+                break;
+            }
+        }
+        let Some((fam, mut d, g, w0)) = picked else { return Err("unknown protocol: no known characteristic".into()) };
+        if fam != lamp.family {
+            logf!("lamp '{}': {} protocol", lamp.name, fam);
+            config::update(|c| {
+                if let Some(l) = c.lamps.iter_mut().find(|l| l.id == lamp.id) {
+                    l.family = fam.into();
+                }
+            });
+        }
+        let w1 = g.write2.and_then(|u| dev.find(&[u]));
+        let mut ntf = None;
+        if let Some(c) = dev.find(&g.notify) {
+            match gatt::subscribe(&c, tx, |v, g| Msg::Notify(v, g), generation) {
+                Ok(t) => ntf = Some((c, t)),
+                Err(e) => logf!("lamp: {e}"),
+            }
+        }
+        let hello = d.hello();
+        for (i, (_, f)) in hello.iter().enumerate() {
+            gatt::write(&w0, f, g.response)?;
+            if i + 1 < hello.len() {
+                std::thread::sleep(Duration::from_millis(300));
+            }
+        }
+        let caps = d.caps();
+        logf!("lamp: connected '{name}' {:012x} ({fam}) in {} ms", lamp.addr, t.elapsed().as_millis());
+        return Ok(Opened { link: Link::Ble { _dev: dev, w0, w1, ntf, drv: d, g }, caps, st, has_state, fx: Vec::new() });
+    }
+    let mut extra = lamp.extra.clone();
+    if lamp.family == "nanoleaf" && extra["token"].as_str().unwrap_or("").is_empty() {
+        match drv::net_nanoleaf::pair(&lamp.host) {
+            Ok(t) => {
+                extra = json!({ "token": t });
+                let e2 = extra.clone();
+                config::update(|c| {
+                    if let Some(l) = c.lamps.iter_mut().find(|l| l.id == lamp.id) {
+                        l.extra = e2;
+                    }
+                });
+            }
+            Err(e) => return Err(if e == "pair" { "nanoleaf-button".into() } else { e }),
+        }
+    }
+    let mut d = drv::make_net(&lamp.family, &lamp.host, &extra).ok_or("unknown protocol")?;
+    let caps = d.caps();
+    if caps.state && d.refresh(&mut st)? {
+        has_state = true;
+    }
+    let fx = if caps.fx == "dyn" { d.effects() } else { Vec::new() };
+    logf!("lamp: connected '{}' {} ({})", lamp.name, lamp.host, lamp.family);
+    Ok(Opened { link: Link::Net { drv: d }, caps, st, has_state, fx })
 }
 
 /// Watches Bluetooth adverts and keeps FOUND up to date (lamps only).
