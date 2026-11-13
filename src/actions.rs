@@ -54,6 +54,17 @@ pub fn on_page(m: &Value) {
         "ready" => fly::push_state(),
         "refresh" => engine::refresh(),
         "hide" => fly::hide(),
+        "hk" => {
+            if let Some(on) = m.get("capture").and_then(Value::as_bool) {
+                crate::hotkeys::capture(on);
+            } else if bool_of(m, "reset") {
+                crate::hotkeys::reset();
+            } else if let Some(a) = m.get("id").and_then(Value::as_str) {
+                let n = |k| m.get(k).and_then(Value::as_u64).unwrap_or(0) as u32;
+                crate::hotkeys::set(a, n("mods"), n("vk"));
+            }
+            fly::push_state();
+        }
         "power" => {
             let on = bool_of(m, "on");
             if !on {
@@ -152,11 +163,14 @@ pub fn on_page(m: &Value) {
                 if let Some(v) = m.get("screenSat").and_then(Value::as_u64) {
                     c.screen_sat = v.min(100) as u8;
                 }
-                if let Some(v) = m.get("lang").and_then(Value::as_str).filter(|v| ["uk", "en", "system"].contains(v)) {
+                if let Some(v) = m.get("lang").and_then(Value::as_str).filter(|v| *v == "system" || crate::util::LANGS.contains(v)) {
                     c.rest.insert("lang".into(), json!(v));
                 }
                 if let Some(v) = m.get("theme").and_then(Value::as_str).filter(|v| ["light", "dark", "system"].contains(v)) {
                     c.rest.insert("theme".into(), json!(v));
+                }
+                if let Some(v) = m.get("pinned").and_then(Value::as_bool) {
+                    c.rest.insert("pinned".into(), json!(v));
                 }
                 if let Some(v) = m.get("fxFavs").filter(|v| v.is_array()) {
                     c.rest.insert("fxFavs".into(), v.clone());
@@ -316,6 +330,9 @@ pub fn state_json() -> String {
             "fxFavs": c.rest.get("fxFavs").cloned().unwrap_or(json!([])),
             "theme": c.rest.get("theme").cloned().unwrap_or(json!("light")),
             "lang": c.rest.get("lang").cloned().unwrap_or(json!("en")),
+            "sysLang": crate::util::system_lang(),
+            "pinned": c.rest.get("pinned").cloned().unwrap_or(json!(false)),
+            "hotkeys": crate::hotkeys::state(),
         },
     })
     .to_string()

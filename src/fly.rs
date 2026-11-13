@@ -59,6 +59,11 @@ fn windows_dark() -> bool {
     r.is_ok() && v == 0
 }
 
+/// A pinned window stays open when it loses the focus.
+fn pinned() -> bool {
+    config::get().rest.get("pinned").and_then(|v| v.as_bool()).unwrap_or(false)
+}
+
 fn bg() -> (u8, u8, u8) {
     if dark() { BG_DARK } else { BG_LIGHT }
 }
@@ -231,7 +236,7 @@ fn fail(what: &str, e: Option<windows::core::Error>) {
     close();
 }
 
-/// The page with the effect tables put in: read from disk in debug builds (edit and reload),
+/// The page with the effect tables and translations put in: read from disk in debug builds (edit and reload),
 /// embedded in release.
 fn page() -> String {
     let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/web/");
@@ -244,7 +249,8 @@ fn page() -> String {
             fx = s;
         }
     }
-    html.replacen("window.FX=null", &format!("window.FX={}", fx.trim()), 1)
+    let i18n = util::i18n_json();
+    html.replacen("window.FX=null", &format!("window.FX={}", fx.trim()), 1).replacen("window.I18N=null", &format!("window.I18N={}", i18n.trim()), 1)
 }
 
 fn ready(hwnd: HWND, ctl: ICoreWebView2Controller) {
@@ -347,6 +353,7 @@ pub fn hide() {
     });
     engine::set_awake(false);
     engine::scan(false);
+    crate::hotkeys::capture(false);
 }
 
 pub fn close() {
@@ -385,7 +392,7 @@ unsafe extern "system" fn wndproc(h: HWND, m: u32, wp: WPARAM, lp: LPARAM) -> LR
             resize();
             return LRESULT(0);
         }
-        WM_ACTIVATE if wp.0 & 0xffff == 0 => hide(),
+        WM_ACTIVATE if wp.0 & 0xffff == 0 && !pinned() => hide(),
         WM_CLOSE => {
             hide();
             return LRESULT(0);

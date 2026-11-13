@@ -5,7 +5,8 @@ use std::sync::mpsc::Sender;
 
 use windows::{
     Devices::Bluetooth::{
-        BluetoothCacheMode, BluetoothLEDevice,
+        Advertisement::{BluetoothLEAdvertisementReceivedEventArgs, BluetoothLEAdvertisementWatcher, BluetoothLEScanningMode},
+        BluetoothAddressType, BluetoothCacheMode, BluetoothLEDevice,
         GenericAttributeProfile::{GattCharacteristic, GattCharacteristicProperties, GattClientCharacteristicConfigurationDescriptorValue, GattCommunicationStatus, GattDeviceService, GattValueChangedEventArgs, GattWriteOption},
     },
     Foundation::TypedEventHandler,
@@ -53,10 +54,41 @@ impl Dev {
     }
 }
 
+/// Waits up to `wait` for an advert from `addr`; returns its address type.
+fn heard(addr: u64, wait: std::time::Duration) -> Option<BluetoothAddressType> {
+    use std::sync::{Arc, Mutex};
+    let got: Arc<Mutex<Option<BluetoothAddressType>>> = Default::default();
+    let w = BluetoothLEAdvertisementWatcher::new().ok()?;
+    let _ = w.SetScanningMode(BluetoothLEScanningMode::Active);
+    let g2 = got.clone();
+    w.Received(&TypedEventHandler::new(move |_, a: Ref<BluetoothLEAdvertisementReceivedEventArgs>| {
+        let a = a.ok()?;
+        if a.BluetoothAddress()? == addr {
+            *g2.lock().unwrap() = Some(a.BluetoothAddressType()?);
+        }
+        Ok(())
+    }))
+    .ok()?;
+    w.Start().ok()?;
+    let t = std::time::Instant::now();
+    while t.elapsed() < wait && got.lock().unwrap().is_none() {
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+    let _ = w.Stop();
+    *got.lock().unwrap()
+}
+
 /// Opens the device at `addr` and reads its services (cache first, the device itself if the
-/// cache is empty — the first connection after pairing in Windows).
+/// cache is empty — the first connection after pairing in Windows). Windows hands out no device
+/// for an address it has not heard since it started: then the lamp is looked for in the air first.
 pub fn open(addr: u64) -> Result<Dev, String> {
-    let dev = BluetoothLEDevice::FromBluetoothAddressAsync(addr).and_then(|op| op.join()).map_err(es)?;
+    let dev = match BluetoothLEDevice::FromBluetoothAddressAsync(addr).and_then(|op| op.join()) {
+        Ok(d) => d,
+        Err(_) => {
+            let typ = heard(addr, std::time::Duration::from_secs(8)).ok_or("lamp not found nearby")?;
+            BluetoothLEDevice::FromBluetoothAddressWithBluetoothAddressTypeAsync(addr, typ).and_then(|op| op.join()).map_err(|_| "lamp not found nearby".to_string())?
+        }
+    };
     let name = dev.Name().map(|n| n.to_string()).unwrap_or_default();
     let mut d = Dev { dev, name, services: Vec::new(), chars: Vec::new() };
     for mode in [BluetoothCacheMode::Cached, BluetoothCacheMode::Uncached] {

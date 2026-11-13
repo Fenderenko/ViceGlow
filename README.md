@@ -18,13 +18,17 @@ lamps of many brands, no phone needed.
   or as a rainbow to the beat.
 - **Screen colour** — the lamp continues the colours of your monitor, like ambient TV lighting.
 - **Schedule** — on / off timers stored in the lamp itself (they work with the PC off), shown on
-  a 24-hour dial. BanlanX SP611E–SP621E for now.
+  a 24-hour dial; if the lamp loses power and forgets them, Vice Glow writes them back. BanlanX
+  SP611E–SP621E for now.
 - **Devices** — lamps nearby are found automatically (Bluetooth and your Wi-Fi network) and
   recognised by model before connecting. Connection is separate from the lamp's power.
   Rename a lamp — BanlanX SP611E–SP621E take the new name themselves.
 - **Tray and hotkeys** — on / off, brightness, favourite colours, scenes and switching lamps from
-  the tray menu; `Ctrl+Alt+L` toggles the lamp, `Ctrl+Alt+PgUp` / `PgDn` change brightness.
-- Light and dark themes, English and Ukrainian.
+  the tray menu; `Ctrl+Alt+L` toggles the lamp, `Ctrl+Alt+PgUp` / `PgDn` change brightness —
+  any combination can be set in Settings.
+- The window opens next to the tray and can be pinned to stay open.
+- Light and dark themes; English, German, French, Spanish, Portuguese, Polish, Italian, Turkish
+  and Ukrainian.
 
 | | |
 |---|---|

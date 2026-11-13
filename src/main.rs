@@ -10,6 +10,7 @@ mod drv;
 mod engine;
 mod fly;
 mod gatt;
+mod hotkeys;
 mod lamp;
 mod live;
 mod proto;
@@ -26,7 +27,6 @@ use windows::{
         },
         UI::{
             HiDpi::{DPI_AWARENESS_CONTEXT_SYSTEM_AWARE, SetProcessDpiAwarenessContext},
-            Input::KeyboardAndMouse::{MOD_ALT, MOD_CONTROL, MOD_NOREPEAT, RegisterHotKey, UnregisterHotKey, VK_L, VK_NEXT, VK_PRIOR},
             WindowsAndMessaging::{
                 AllowSetForegroundWindow, CreateWindowExW, DefWindowProcW, DispatchMessageW, FindWindowW, GetMessageW, GetWindowThreadProcessId, KillTimer, MSG, PostMessageW, PostQuitMessage, RegisterClassExW,
                 RegisterWindowMessageW, SetTimer, TranslateMessage, WINDOW_EX_STYLE, WINDOW_STYLE, WM_APP, WM_CONTEXTMENU, WM_ENDSESSION, WM_HOTKEY, WM_LBUTTONUP, WM_RBUTTONUP, WM_TIMER, WNDCLASSEXW,
@@ -36,7 +36,10 @@ use windows::{
     core::w,
 };
 
-use crate::engine::Act;
+use crate::{
+    engine::Act,
+    hotkeys::{HK_DOWN, HK_TOGGLE, HK_UP},
+};
 
 /// The lamp state changed (from the engine thread).
 pub const WM_STATE: u32 = WM_APP + 1;
@@ -44,9 +47,6 @@ pub const WM_TRAY: u32 = WM_APP + 2;
 /// Another start of the exe asks to show the window.
 pub const WM_SHOW: u32 = WM_APP + 3;
 
-const HK_TOGGLE: i32 = 1;
-const HK_UP: i32 = 2;
-const HK_DOWN: i32 = 3;
 const TIMER_TRAY: usize = 1;
 
 static TASKBAR_CREATED: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
@@ -93,7 +93,7 @@ fn main() {
             SetTimer(Some(hwnd), TIMER_TRAY, 2000, None);
         }
     }
-    register_hotkeys(hwnd);
+    hotkeys::register();
     engine::start();
     if !tray_only {
         fly::open();
@@ -109,21 +109,9 @@ fn main() {
     shutdown(hwnd);
 }
 
-fn register_hotkeys(hwnd: HWND) {
-    let mods = MOD_CONTROL | MOD_ALT;
-    for (id, m, vk, name) in [(HK_TOGGLE, mods | MOD_NOREPEAT, VK_L.0, "Ctrl+Alt+L"), (HK_UP, mods, VK_PRIOR.0, "Ctrl+Alt+PgUp"), (HK_DOWN, mods, VK_NEXT.0, "Ctrl+Alt+PgDn")] {
-        if unsafe { RegisterHotKey(Some(hwnd), id, m, vk as u32) }.is_err() {
-            logf!("hotkey {name} is taken by another app");
-        }
-    }
-}
-
 fn shutdown(hwnd: HWND) {
-    for id in [HK_TOGGLE, HK_UP, HK_DOWN] {
-        unsafe {
-            let _ = UnregisterHotKey(Some(hwnd), id);
-        }
-    }
+    let _ = hwnd;
+    hotkeys::unregister();
     live::set("off");
     tray::remove();
     fly::close();

@@ -3,7 +3,7 @@
 //! `53 43 <packet #> <total len> <chunk len> <chunk…>`; the chunks joined give the payload.
 //! Timer set / delete were taken from the BanlanX app (Android HCI log) and checked on the lamp.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 pub const SOLID: u8 = 0xBE;
 pub const MAX_SPEED: u8 = 10;
@@ -12,7 +12,7 @@ pub const MAX_LENGTH: u8 = 150;
 const HEAD: usize = 23;
 const TIMER_LEN: usize = 7;
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Timer {
     pub idx: u8,
     /// true — turns the lamp on, false — off

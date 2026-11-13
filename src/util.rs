@@ -123,37 +123,78 @@ pub fn open_url(url: &str) {
 
 /// The interface language: English unless Ukrainian is chosen (or "system" with a Ukrainian
 /// Windows).
-pub fn english() -> bool {
-    match crate::config::get().rest.get("lang").and_then(|v| v.as_str()) {
-        Some("en") => true,
-        Some("uk") => false,
-        Some("system") => (unsafe { windows::Win32::Globalization::GetUserDefaultUILanguage() } & 0x3ff) != 0x22,
-        _ => true,
+/// Interface languages (web/i18n.json, made by tools/i18n_src.py); Ukrainian strings are the keys.
+pub const LANGS: [&str; 9] = ["uk", "en", "de", "fr", "es", "pt", "pl", "it", "tr"];
+
+/// The Windows display language if the interface has it, otherwise English.
+pub fn system_lang() -> &'static str {
+    let id = unsafe { windows::Win32::Globalization::GetUserDefaultUILanguage() } & 0x3ff;
+    match id {
+        0x22 => "uk",
+        0x07 => "de",
+        0x0c => "fr",
+        0x0a => "es",
+        0x16 => "pt",
+        0x15 => "pl",
+        0x10 => "it",
+        0x1f => "tr",
+        _ => "en",
     }
 }
 
+/// The interface language chosen in the settings (English by default).
+pub fn lang() -> &'static str {
+    match crate::config::get().rest.get("lang").and_then(|v| v.as_str()) {
+        Some("system") => system_lang(),
+        Some(l) => LANGS.iter().copied().find(|x| *x == l).unwrap_or("en"),
+        None => "en",
+    }
+}
+
+/// web/i18n.json: from disk in debug builds (edit and reload), embedded in release.
+pub fn i18n_json() -> String {
+    if cfg!(debug_assertions)
+        && let Ok(s) = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/web/i18n.json"))
+    {
+        return s;
+    }
+    include_str!("../web/i18n.json").to_string()
+}
+
+type Dict = std::collections::HashMap<String, std::collections::HashMap<String, &'static str>>;
+
 /// A Ukrainian interface string in the interface language (tray menu and tooltip).
 pub fn tr(uk: &'static str) -> &'static str {
-    if !english() {
+    static DICT: std::sync::OnceLock<Dict> = std::sync::OnceLock::new();
+    let lang = lang();
+    if lang == "uk" {
         return uk;
     }
-    match uk {
-        "Вимкнути" => "Turn off",
-        "Увімкнути" => "Turn on",
-        "Яскравість" => "Brightness",
-        "Колір" => "Colour",
-        "Сцени" => "Scenes",
-        "Лампа" => "Lamp",
-        "Відкрити Vice Glow" => "Open Vice Glow",
-        "Вихід" => "Exit",
-        "Увімкнено" => "On",
-        "Вимкнено" => "Off",
-        "Вечір" => "Evening",
-        "Кіно" => "Movie",
-        "Стрім" => "Stream",
-        "Читання" => "Reading",
-        "Вечірка" => "Party",
-        _ => uk,
+    let d = DICT.get_or_init(|| {
+        let v: serde_json::Value = serde_json::from_str(include_str!("../web/i18n.json")).unwrap_or_default();
+        let mut d = Dict::new();
+        if let Some(ui) = v.get("ui").and_then(|u| u.as_object()) {
+            for (l, m) in ui {
+                let m = m.as_object().map(|m| m.iter().filter_map(|(k, s)| Some((k.clone(), &*Box::leak(s.as_str()?.to_string().into_boxed_str())))).collect()).unwrap_or_default();
+                d.insert(l.clone(), m);
+            }
+        }
+        d
+    });
+    d.get(lang).and_then(|m| m.get(uk)).copied().unwrap_or(uk)
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn i18n_has_every_language_and_tray_string() {
+        let v: serde_json::Value = serde_json::from_str(include_str!("../web/i18n.json")).unwrap();
+        for l in &super::LANGS[1..] {
+            let m = &v["ui"][l];
+            for k in ["Вимкнути", "Увімкнути", "Яскравість", "Колір", "Сцени", "Лампа", "Відкрити Vice Glow", "Вихід", "Увімкнено", "Вимкнено", "Вечір", "Кіно", "Стрім", "Читання", "Вечірка"] {
+                assert!(m[k].is_string(), "{l}: {k}");
+            }
+        }
     }
 }
 

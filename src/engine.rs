@@ -34,7 +34,7 @@ const IDLE: Duration = Duration::from_secs(20);
 const RETRY: Duration = Duration::from_secs(5);
 /// a connection attempt longer than this counts as failed (Windows may wait much longer for a
 /// lamp that is away or held by a phone); a late result is dropped
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(12);
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(20);
 /// writes settle this long before the state is read back
 const SETTLE: Duration = Duration::from_millis(250);
 const KEEPALIVE: Duration = Duration::from_secs(2);
@@ -264,6 +264,8 @@ struct Worker {
     net_scanning: bool,
     /// a connection attempt is running (generation gen_), since when
     connecting: bool,
+    /// the first state of a new link is still to come (timers are checked on it)
+    fresh_link: bool,
     connect_at: Option<Instant>,
 }
 
@@ -354,6 +356,9 @@ impl Worker {
                     && drv.notified(&d, &mut self.st)
                 {
                     self.has_state = true;
+                    if std::mem::take(&mut self.fresh_link) {
+                        self.sync_timers();
+                    }
                     self.publish();
                 }
             }
@@ -386,6 +391,7 @@ impl Worker {
                         self.need_query = true;
                         self.retry_at = None;
                         self.last_keep = Some(Instant::now());
+                        self.fresh_link = true;
                         let fx = o.fx;
                         changed(|s| {
                             s.conn = Conn::On;
@@ -461,6 +467,46 @@ impl Worker {
                 changed(|s| s.err.clear());
             }
             Err(e) => changed(|s| s.err = if e == "pair" { "hue-button".into() } else { e }),
+        }
+    }
+
+    /// The timers the app knows for the active lamp (kept in its settings).
+    fn saved_timers(&self) -> Vec<lamp::Timer> {
+        let id = self.lamp.as_ref().map(|l| l.id.clone()).unwrap_or_default();
+        config::lamp(&id).and_then(|l| serde_json::from_value(l.extra.get("timers").cloned()?).ok()).unwrap_or_default()
+    }
+
+    fn save_timers(&self) {
+        let Some(id) = self.lamp.as_ref().map(|l| l.id.clone()) else { return };
+        let v = serde_json::to_value(&self.st.timers).unwrap_or(Value::Null);
+        config::update(|c| {
+            if let Some(l) = c.lamps.iter_mut().find(|l| l.id == id) {
+                if !l.extra.is_object() {
+                    l.extra = json!({});
+                }
+                l.extra["timers"] = v;
+            }
+        });
+    }
+
+    /// First state after connecting: a lamp that lost power forgets its timers — the saved ones
+    /// go back; otherwise the lamp's own list is kept as the saved one. Writing a timer also sets
+    /// the lamp clock, which a power loss resets too.
+    fn sync_timers(&mut self) {
+        if !self.caps.timers {
+            return;
+        }
+        let saved = self.saved_timers();
+        if self.st.timers.is_empty() && !saved.is_empty() {
+            logf!("lamp: timers lost (power cut?), restoring {}", saved.len());
+            for t in saved {
+                push_coalesced(&mut self.pending, Op::TimerSet(t));
+            }
+        } else if let Some(t) = self.st.timers.first().cloned() {
+            if self.st.timers != saved {
+                self.save_timers();
+            }
+            push_coalesced(&mut self.pending, Op::TimerSet(t));
         }
     }
 
@@ -584,6 +630,9 @@ impl Worker {
                     break;
                 }
                 lamp::apply(&mut self.st, &o);
+                if matches!(o, Op::TimerSet(_) | Op::TimerDel(_)) {
+                    self.save_timers();
+                }
                 if let Op::Stream(c, b) = &o {
                     self.st.rgb = *c;
                     self.st.bright = *b;

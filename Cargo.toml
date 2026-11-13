@@ -1,6 +1,6 @@
 [package]
 name = "viceglow"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 description = "Vice Glow — LED lamps from the Windows tray"
 license = "GPL-3.0-only"
