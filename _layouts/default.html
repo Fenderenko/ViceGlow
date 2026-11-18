@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ site.title }} — {{ site.description }}</title>
+  <meta name="description" content="{{ site.description }}">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='4' y1='4' x2='20' y2='20' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%239B6BFF'/%3E%3Cstop offset='.6' stop-color='%23FF4FB0'/%3E%3Cstop offset='1' stop-color='%23FF9F6B'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M18.3 6.7A8.2 8.2 0 1 0 20.2 12C20.2 17.2 12.6 18.6 9.8 14.8C8.4 12.8 9.6 9.4 11.9 10.6' fill='none' stroke='url(%23g)' stroke-width='2.6' stroke-linecap='round'/%3E%3Ccircle cx='12.7' cy='12' r='2' fill='%23FF9FD6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}">
+</head>
+<body>
+  <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="ma" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.8"/></filter>
+      <filter id="mb" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation=".6"/></filter>
+      <linearGradient id="mg" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#9B6BFF"/><stop offset=".6" stop-color="#FF4FB0"/><stop offset="1" stop-color="#FF9F6B"/></linearGradient>
+      <radialGradient id="mo" cx=".42" cy=".38"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#FFE0F2"/><stop offset="1" stop-color="#FF7AC6"/></radialGradient>
+      <path id="spiral" d="M18.3 6.7A8.2 8.2 0 1 0 20.2 12C20.2 17.2 12.6 18.6 9.8 14.8C8.4 12.8 9.6 9.4 11.9 10.6"/>
+      <symbol id="mark" viewBox="0 0 24 24" overflow="visible">
+        <circle cx="12.7" cy="12" r="4.2" fill="#FF4FB0" opacity=".5" filter="url(#ma)"/>
+        <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <use href="#spiral" stroke="#B15CFF" stroke-width="4.3" opacity=".5" filter="url(#ma)"/>
+          <use href="#spiral" stroke="url(#mg)" stroke-width="2.7" opacity=".9" filter="url(#mb)"/>
+          <use href="#spiral" stroke="url(#mg)" stroke-width="1.8"/>
+          <use href="#spiral" stroke="#fff" stroke-width=".63" opacity=".85"/>
+        </g>
+        <circle cx="12.7" cy="12" r="1.9" fill="url(#mo)"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header class="bar">
+    <div class="wrap bar-in">
+      <a class="brand" href="{{ '/' | relative_url }}"><svg class="mark" width="26" height="26" aria-hidden="true"><use href="#mark"/></svg><span>Vice Glow</span></a>
+      <nav class="links">
+        <a href="https://github.com/Fenderenko/ViceGlow">GitHub</a>
+        <a class="btn" href="https://github.com/Fenderenko/ViceGlow/releases/latest">Download</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <svg class="logo" width="96" height="96" aria-hidden="true"><use href="#mark"/></svg>
+      <h1>Vice Glow</h1>
+      <p class="tag">Your LED lamps from the Windows tray — colour, effects, scenes, timers, light that follows your music or your screen. Bluetooth and Wi-Fi, no phone needed.</p>
+      <div class="cta">
+        <a class="btn big" href="https://github.com/Fenderenko/ViceGlow/releases/latest/download/ViceGlow.exe">Download for Windows</a>
+        <a class="ghost big" href="https://github.com/Fenderenko/ViceGlow">Source on GitHub</a>
+      </div>
+      <p class="fine">Windows 10 / 11 · free · GPL-3.0 · 9 languages</p>
+    </div>
+  </section>
+
+  <main class="wrap content">
+{{ content }}
+  </main>
+
+  <footer class="wrap foot">
+    <span>Vice Glow · Fenderenko</span>
+    <a href="https://github.com/Fenderenko/ViceGlow/releases">All releases</a>
+  </footer>
+</body>
+</html>

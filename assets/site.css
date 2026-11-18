@@ -1,0 +1,95 @@
+/* Vice Glow site: the app's lilac glass and neon glow; dark by default, light with the system. */
+:root {
+  --bg: #141219; --ink: #f1eef8; --mu: #9a95ad; --line: rgba(255,255,255,.08);
+  --glass: rgba(34,31,44,.62); --card: #2b2836; --soft: rgba(255,255,255,.06);
+  --vio: #a393ff; --pink: #ff4fb0; --lamp: #ff6a1a; --lamp2: #ff2d6f;
+  --a1: .26; --a2: .15; --a3: .14;
+  --sh: 0 1px 0 rgba(255,255,255,.04) inset, 0 24px 50px -24px rgba(0,0,0,.7);
+  --r: 22px;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f3fb; --ink: #1d1a2c; --mu: #6f6a88; --line: rgba(120,100,200,.14);
+    --glass: rgba(255,255,255,.7); --card: #fff; --soft: rgba(122,104,245,.07);
+    --vio: #6f5cf0; --a1: .30; --a2: .16; --a3: .32;
+    --sh: 0 1px 0 rgba(255,255,255,.9) inset, 0 20px 44px -22px rgba(70,50,150,.25);
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.65 "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.aura { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: -1; }
+.aura i { position: absolute; border-radius: 50%; filter: blur(110px); }
+.aura i:nth-child(1) { width: 620px; height: 620px; left: 30%; top: -260px; background: #9b6bff; opacity: var(--a1); }
+.aura i:nth-child(2) { width: 520px; height: 520px; right: -180px; top: 45%; background: #ff4fb0; opacity: var(--a2); }
+.aura i:nth-child(3) { width: 460px; height: 460px; left: -200px; bottom: -160px; background: #b9adff; opacity: var(--a3); }
+.wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+a { color: var(--vio); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 5; backdrop-filter: blur(18px) saturate(1.3); background: color-mix(in srgb, var(--bg) 70%, transparent); border-bottom: 1px solid var(--line); }
+.bar-in { display: flex; align-items: center; gap: 16px; height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--ink); font: 600 17px "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
+.brand:hover { text-decoration: none; }
+.mark { overflow: visible; }
+.links { margin-left: auto; display: flex; align-items: center; gap: 18px; font-size: 14px; }
+.links a:not(.btn) { color: var(--mu); }
+.links a:not(.btn):hover { color: var(--ink); text-decoration: none; }
+
+/* buttons */
+.btn, .ghost { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 16px; border-radius: 99px; font-weight: 600; font-size: 14px; white-space: nowrap; transition: transform .15s, box-shadow .2s, background .2s; }
+.btn { color: #fff; background: linear-gradient(135deg, var(--lamp), var(--lamp2)); box-shadow: 0 8px 22px -8px var(--lamp2), inset 0 1px 0 rgba(255,255,255,.35); }
+.ghost { color: var(--ink); background: var(--soft); box-shadow: inset 0 0 0 1px var(--line); }
+.btn:hover, .ghost:hover { text-decoration: none; transform: translateY(-1px); }
+.btn:hover { box-shadow: 0 12px 30px -8px var(--lamp2), inset 0 1px 0 rgba(255,255,255,.35); }
+.big { height: 48px; padding: 0 24px; font-size: 15px; }
+
+/* hero */
+.hero { text-align: center; padding: 72px 0 40px; }
+.logo { overflow: visible; filter: drop-shadow(0 0 22px rgba(255,79,176,.35)); }
+.hero h1 { margin: 18px 0 10px; font: 600 clamp(40px, 7vw, 60px)/1.05 "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; letter-spacing: -1.5px; background: linear-gradient(120deg, var(--ink) 30%, #c9a8ff 60%, #ff8fc8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tag { max-width: 600px; margin: 0 auto; color: var(--mu); font-size: 18px; }
+.cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 30px 0 14px; }
+.fine { color: var(--mu); font-size: 13px; margin: 0; }
+
+/* README */
+.content { padding-bottom: 40px; }
+.content > h1:first-child, .content > h1:first-child + p,
+.content > .markdown-heading:first-child, .content > .markdown-heading:first-child + p { display: none; }
+.content .anchor { display: none; }
+.content h2 { font: 600 28px/1.2 "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; letter-spacing: -.5px; margin: 64px 0 18px; }
+.content h3 { font: 600 19px/1.3 "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; margin: 34px 0 12px; }
+.content p, .content li { color: color-mix(in srgb, var(--ink) 86%, var(--mu)); }
+.content strong { color: var(--ink); }
+.content ul { padding-left: 22px; }
+.content li { margin: 8px 0; }
+.content li::marker { color: var(--pink); }
+.content img { display: block; max-width: 100%; height: auto; border-radius: 18px; border: 1px solid var(--line); box-shadow: 0 30px 60px -30px rgba(0,0,0,.6); }
+.content > p > img:only-child { margin: 8px auto 0; }
+.content table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 16px 0; font-size: 14px; background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; box-shadow: var(--sh); display: block; overflow-x: auto; }
+.content th, .content td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.content tr:last-child td { border-bottom: 0; }
+.content th { color: var(--mu); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; }
+.content th:empty { display: none; }
+.content table:has(th:empty) { background: none; border: 0; box-shadow: none; backdrop-filter: none; }
+.content table:has(th:empty) td { border: 0; padding: 8px; width: 50%; }
+.content table:has(th:empty) thead { display: none; }
+.content code { font: 13.5px "Cascadia Code", Consolas, monospace; background: var(--soft); border: 1px solid var(--line); padding: 1px 6px; border-radius: 7px; }
+.content pre { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; overflow-x: auto; }
+.content pre code { background: none; border: 0; padding: 0; }
+.content hr { border: 0; height: 1px; background: var(--line); margin: 48px 0; }
+.content blockquote { margin: 16px 0; padding: 4px 18px; border-left: 3px solid var(--vio); color: var(--mu); }
+
+/* footer */
+.foot { display: flex; justify-content: space-between; gap: 16px; padding-top: 22px; padding-bottom: 40px; border-top: 1px solid var(--line); color: var(--mu); font-size: 14px; }
+
+@media (max-width: 600px) {
+  .hero { padding-top: 48px; }
+  .links a:not(.btn) { display: none; }
+  .content h2 { font-size: 24px; }
+}
