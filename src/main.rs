@@ -151,6 +151,7 @@ unsafe extern "system" fn wndproc(h: HWND, m: u32, wp: WPARAM, lp: LPARAM) -> LR
                 _ => {}
             }
         }
+        WM_TIMER if wp.0 == fly::TIMER_WATCH => fly::watch(),
         WM_TIMER if wp.0 == TIMER_TRAY => {
             if tray::add() {
                 unsafe {

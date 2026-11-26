@@ -106,6 +106,8 @@ enum Msg {
 /// What a finished connection attempt hands to the engine.
 struct Opened {
     link: Link,
+    /// the name the lamp itself has (Bluetooth; empty for the network ones)
+    name: String,
     caps: Caps,
     st: State,
     has_state: bool,
@@ -365,8 +367,10 @@ impl Worker {
             Msg::Net(list) => {
                 self.net_scanning = false;
                 let mut f = FOUND.lock().unwrap();
+                let mut names = Vec::new();
                 for n in list {
                     let id = n.id();
+                    names.push((id.clone(), n.name.clone()));
                     let e = Found { id: id.clone(), family: n.family, model: n.model, name: n.name, net: "wifi", rssi: None, addr: 0, host: n.host, extra: n.extra, seen: Some(Instant::now()) };
                     match f.iter_mut().find(|x| x.id == id) {
                         Some(x) => *x = e,
@@ -374,6 +378,9 @@ impl Worker {
                     }
                 }
                 drop(f);
+                for (id, name) in names {
+                    sync_lamp_name(&id, &name);
+                }
                 util::post_ui(crate::WM_STATE, 0);
             }
             Msg::Opened(g, r) => {
@@ -392,6 +399,7 @@ impl Worker {
                         self.retry_at = None;
                         self.last_keep = Some(Instant::now());
                         self.fresh_link = true;
+                        self.sync_name_on_connect(&o.name);
                         let fx = o.fx;
                         changed(|s| {
                             s.conn = Conn::On;
@@ -435,7 +443,11 @@ impl Worker {
         }
         if config::lamp(id).is_none() {
             let Some(f) = found else { return };
-            let l = Lamp { id: f.id.clone(), family: f.family.into(), model: f.model.clone(), name: if f.name.is_empty() { f.model.clone() } else { f.name.clone() }, addr: f.addr, host: f.host.clone(), extra: f.extra.clone(), ..Default::default() };
+            let mut l = Lamp { id: f.id.clone(), family: f.family.into(), model: f.model.clone(), name: if f.name.is_empty() { f.model.clone() } else { f.name.clone() }, addr: f.addr, host: f.host.clone(), extra: f.extra.clone(), ..Default::default() };
+            if !l.extra.is_object() {
+                l.extra = json!({});
+            }
+            l.extra["nameLocal"] = json!(false); // the lamp's own name; it follows renames on the lamp
             config::update(|c| c.lamps.push(l));
         }
         config::update(|c| {
@@ -507,6 +519,18 @@ impl Worker {
                 self.save_timers();
             }
             push_coalesced(&mut self.pending, Op::TimerSet(t));
+        }
+    }
+
+    /// Just connected: a name given in Vice Glow while the lamp was away is written to it now
+    /// (where the protocol allows); otherwise the lamp's own name is taken.
+    fn sync_name_on_connect(&mut self, own: &str) {
+        let Some(l) = self.lamp.as_ref().and_then(|l| config::lamp(&l.id)) else { return };
+        if self.caps.rename && name_local(&l) {
+            push_coalesced(&mut self.pending, Op::Rename(l.name.clone()));
+            set_name_local(&l.id, false);
+        } else {
+            sync_lamp_name(&l.id, own);
         }
     }
 
@@ -745,6 +769,7 @@ fn open_link(lamp: &Lamp, tx: Sender<Msg>, generation: u64) -> Result<Opened, St
     if lamp.is_ble() {
         let t = Instant::now();
         let dev = gatt::open(lamp.addr)?;
+        let dev_name = dev.name.clone();
         let name = if dev.name.is_empty() { lamp.name.clone() } else { dev.name.clone() };
         let mut picked = None;
         for fam in drv::candidates(&lamp.family, &name) {
@@ -781,13 +806,16 @@ fn open_link(lamp: &Lamp, tx: Sender<Msg>, generation: u64) -> Result<Opened, St
         }
         let caps = d.caps();
         logf!("lamp: connected '{name}' {:012x} ({fam}) in {} ms", lamp.addr, t.elapsed().as_millis());
-        return Ok(Opened { link: Link::Ble { _dev: dev, w0, w1, ntf, drv: d, g }, caps, st, has_state, fx: Vec::new() });
+        return Ok(Opened { link: Link::Ble { _dev: dev, w0, w1, ntf, drv: d, g }, name: dev_name, caps, st, has_state, fx: Vec::new() });
     }
     let mut extra = lamp.extra.clone();
     if lamp.family == "nanoleaf" && extra["token"].as_str().unwrap_or("").is_empty() {
         match drv::net_nanoleaf::pair(&lamp.host) {
             Ok(t) => {
-                extra = json!({ "token": t });
+                if !extra.is_object() {
+                    extra = json!({});
+                }
+                extra["token"] = json!(t);
                 let e2 = extra.clone();
                 config::update(|c| {
                     if let Some(l) = c.lamps.iter_mut().find(|l| l.id == lamp.id) {
@@ -805,7 +833,42 @@ fn open_link(lamp: &Lamp, tx: Sender<Msg>, generation: u64) -> Result<Opened, St
     }
     let fx = if caps.fx == "dyn" { d.effects() } else { Vec::new() };
     logf!("lamp: connected '{}' {} ({})", lamp.name, lamp.host, lamp.family);
-    Ok(Opened { link: Link::Net { drv: d }, caps, st, has_state, fx })
+    Ok(Opened { link: Link::Net { drv: d }, name: String::new(), caps, st, has_state, fx })
+}
+
+/// Whether the saved lamp keeps a name given in Vice Glow that the lamp itself does not have
+/// (extra.nameLocal). Lamps saved before 0.2.3 have no mark: only BanlanX SP611E–SP621E stored names then.
+fn name_local(l: &Lamp) -> bool {
+    l.extra.get("nameLocal").and_then(Value::as_bool).unwrap_or(l.family != "banlanx2")
+}
+
+pub fn set_name_local(id: &str, local: bool) {
+    config::update(|c| {
+        if let Some(l) = c.lamps.iter_mut().find(|l| l.id == id) {
+            if !l.extra.is_object() {
+                l.extra = json!({});
+            }
+            l.extra["nameLocal"] = json!(local);
+        }
+    });
+}
+
+/// The lamp reports a name of its own (advert, Windows, network discovery): the saved lamp takes it,
+/// so a rename from the phone app shows here too — unless it was named in Vice Glow and does not
+/// have that name itself.
+fn sync_lamp_name(id: &str, name: &str) {
+    let name = name.trim();
+    let Some(l) = config::lamp(id).filter(|_| !name.is_empty()) else { return };
+    if l.name == name || l.name.starts_with(name) || name_local(&l) {
+        return;
+    }
+    logf!("lamp: '{}' is now called '{name}' (named on the lamp)", l.name);
+    config::update(|c| {
+        if let Some(l) = c.lamps.iter_mut().find(|l| l.id == id) {
+            l.name = name.to_string();
+        }
+    });
+    util::post_ui(crate::WM_STATE, 0);
 }
 
 /// Watches Bluetooth adverts and keeps FOUND up to date (lamps only).
@@ -828,14 +891,21 @@ fn start_watcher() -> Option<BluetoothLEAdvertisementWatcher> {
         if let Some(x) = f.iter_mut().find(|x| x.id == id) {
             x.rssi = Some(rssi);
             x.seen = Some(Instant::now());
-            if !name.is_empty() && x.name.is_empty() {
-                x.name = name;
+            // a shortened name (advert vs scan response) does not replace the full one
+            let newer = !name.is_empty() && !x.name.starts_with(&name);
+            if newer {
+                x.name = name.clone();
+            }
+            drop(f);
+            if newer {
+                sync_lamp_name(&id, &name);
             }
             return Ok(());
         }
         let Some(i) = drv::identify(&name, &mfr) else { return Ok(()) };
-        f.push(Found { id, family: i.family, model: i.model, name, net: "ble", rssi: Some(rssi), addr, host: String::new(), extra: Value::Null, seen: Some(Instant::now()) });
+        f.push(Found { id: id.clone(), family: i.family, model: i.model, name: name.clone(), net: "ble", rssi: Some(rssi), addr, host: String::new(), extra: Value::Null, seen: Some(Instant::now()) });
         drop(f);
+        sync_lamp_name(&id, &name);
         util::post_ui(crate::WM_STATE, 0);
         Ok(())
     }))

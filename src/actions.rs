@@ -214,10 +214,13 @@ pub fn on_page(m: &Value) {
             let (id, name) = (str_of(m, "id").to_string(), str_of(m, "name").trim().chars().take(32).collect::<String>());
             if !name.is_empty() {
                 let snap = engine::snapshot();
-                // the lamp itself takes the name too where the protocol allows it
-                if snap.lamp == id && snap.caps.rename {
+                // the lamp itself takes the name too where the protocol allows it; otherwise the name
+                // stays Vice Glow's own (a lamp that can take it gets it on the next connection)
+                let written = snap.lamp == id && snap.caps.rename;
+                if written {
                     engine::ops(vec![Op::Rename(name.clone())]);
                 }
+                engine::set_name_local(&id, !written);
                 config::update(|c| {
                     if let Some(l) = c.lamps.iter_mut().find(|l| l.id == id) {
                         l.name = name;

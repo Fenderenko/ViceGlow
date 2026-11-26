@@ -22,7 +22,8 @@ lamps of many brands, no phone needed.
   SP611E–SP621E for now.
 - **Devices** — lamps nearby are found automatically (Bluetooth and your Wi-Fi network) and
   recognised by model before connecting. Connection is separate from the lamp's power.
-  Rename a lamp — BanlanX SP611E–SP621E take the new name themselves.
+  Rename a lamp — BanlanX SP611E–SP621E take the new name themselves; a name changed on the lamp
+  (in its phone app) shows up in Vice Glow too.
 - **Tray and hotkeys** — on / off, brightness, favourite colours, scenes and switching lamps from
   the tray menu; `Ctrl+Alt+L` toggles the lamp, `Ctrl+Alt+PgUp` / `PgDn` change brightness —
   any combination can be set in Settings.
